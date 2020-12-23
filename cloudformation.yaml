@@ -142,23 +142,23 @@ Conditions:
 
   IfRunSshd: !Equals
     - !FindInMap [Constants, Run, Sshd]
-    - "Yes"
+    - Yes
 
   IfRunStreamProducer: !Equals
     - !FindInMap [Constants, Run, StreamProducer]
-    - "Yes"
+    - Yes
 
   IfRunSwagger: !Equals
     - !FindInMap [Constants, Run, Swagger]
-    - "Yes"
+    - Yes
 
   IfRunVpcFlowLogs: !Equals
     - !FindInMap [Constants, Run, VpcFloLogs]
-    - "Yes"
+    - Yes
 
   IfRunWebApp: !Equals
     - !FindInMap [Constants, Run, WebApp]
-    - "Yes"
+    - Yes
 
 # -----------------------------------------------------------------------------
 # Resources
