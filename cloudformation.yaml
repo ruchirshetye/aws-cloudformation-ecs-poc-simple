@@ -9,10 +9,7 @@ AWSTemplateFormatVersion: 2010-09-09
 # TODO: Fix Help URLs.  When hub.senzing.com is available.
 # TODO: Add Senzing database cluster
 # TODO: Cleanup "nag" errors and warnings
-# TODO: Test with existing VPC and Availablity Zones
 # TODO: In Rules, fix detection of empty strings
-# TODO: CIDR variable for restricting access in EcsSecurityGroup
-# TODO: Improve EcsSecurityGroup so it's not a monolith
 # TODO: Add Jupyter
 # TODO: Add X-term (be aware of required stickiness)
 # TODO: Autoscale Entity Search Web App
@@ -42,7 +39,6 @@ Metadata:
           default: "Security"
         Parameters:
           - CidrInbound
-
     ParameterLabels:
       AcceptEula:
         default: >-
@@ -129,9 +125,13 @@ Mappings:
     vpc:
       cidr: 10.0.0.0/16
     pubsubnet1:
-      cidr: 10.0.0.0/24
-    pubsubnet2:
       cidr: 10.0.1.0/24
+    pubsubnet2:
+      cidr: 10.0.2.0/24
+    privsubnet1:
+      cidr: 10.0.3.0/24
+    privsubnet2:
+      cidr: 10.0.4.0/24
 
 # -----------------------------------------------------------------------------
 # Conditions
@@ -668,7 +668,7 @@ Resources:
         - cidr
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-subnet-1"
+          Value: !Sub "${AWS::StackName}-ec2-subnet-public-1"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::Subnet
 
@@ -685,9 +685,64 @@ Resources:
         - cidr
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-subnet-2"
+          Value: !Sub "${AWS::StackName}-ec2-subnet-public-2"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::Subnet
+
+
+  Ec2SubnetPrivate1:
+    Properties:
+      AvailabilityZone: !Select
+          - '0'
+          - !GetAZs
+            Ref: AWS::Region
+      CidrBlock: !FindInMap
+        - VpcCidrs
+        - privsubnet1
+        - cidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-subnet-private-1"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::Subnet
+
+
+  Ec2SubnetPrivate2:
+    Properties:
+      AvailabilityZone: !Select
+          - '1'
+          - !GetAZs
+            Ref: AWS::Region
+      CidrBlock: !FindInMap
+        - VpcCidrs
+        - privsubnet2
+        - cidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-subnet-private-2"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::Subnet
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
+
+  Ec2Eip:
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-eip"
+    Type: AWS::EC2::EIP
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-natgateway.html
+
+  Ec2NatGateway:
+    Properties:
+      AllocationId: !GetAtt Ec2Eip.AllocationId
+      SubnetId: !Ref Ec2SubnetPublic1
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-nat-gateway"
+    Type: AWS::EC2::NatGateway
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
 
@@ -873,38 +928,62 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
 
-  Ec2RouteTable:
+  Ec2RouteTablePublic:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-route-table"
+          Value: !Sub "${AWS::StackName}-ec2-route-table-public"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::RouteTable
+
+
+  Ec2RouteTablePrivate:
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-route-table-private"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::RouteTable
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
 
-  Ec2Route:
+  Ec2RoutePublic:
     DependsOn:
      - Ec2VpcGatewayAttachment
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref Ec2InternetGateway
-      RouteTableId: !Ref Ec2RouteTable
+      RouteTableId: !Ref Ec2RouteTablePublic
+    Type: AWS::EC2::Route
+
+
+  Ec2RoutePrivate:
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref Ec2NatGateway
+      RouteTableId: !Ref Ec2RouteTablePrivate
     Type: AWS::EC2::Route
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
 
-  Ec2SubnetRouteTableAssociation1:
+  Ec2SubnetRouteTableAssociationPublic:
     Properties:
-      RouteTableId: !Ref Ec2RouteTable
+      RouteTableId: !Ref Ec2RouteTablePublic
       SubnetId: !Ref Ec2SubnetPublic1
     Type: AWS::EC2::SubnetRouteTableAssociation
 
 
-  Ec2SubnetRouteTableAssociation2:
+  Ec2SubnetRouteTableAssociationPrivate1:
     Properties:
-      RouteTableId: !Ref Ec2RouteTable
-      SubnetId: !Ref Ec2SubnetPublic2
+      RouteTableId: !Ref Ec2RouteTablePrivate
+      SubnetId: !Ref Ec2SubnetPrivate1
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+
+  Ec2SubnetRouteTableAssociationPrivate2:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePrivate
+      SubnetId: !Ref Ec2SubnetPrivate2
     Type: AWS::EC2::SubnetRouteTableAssociation
 
 # -- Elastic File System ------------------------------------------------------
@@ -930,7 +1009,7 @@ Resources:
       SecurityGroups:
         - Ref: EcsSecurityGroupInternal
       SubnetId:
-        Ref: Ec2SubnetPublic1
+        Ref: Ec2SubnetPrivate1
     Type: AWS::EFS::MountTarget
 
 
@@ -941,7 +1020,7 @@ Resources:
       SecurityGroups:
         - Ref: EcsSecurityGroupInternal
       SubnetId:
-        Ref: Ec2SubnetPublic2
+        Ref: Ec2SubnetPrivate2
     Type: AWS::EFS::MountTarget
 
 # -- Database -----------------------------------------------------------------
@@ -953,8 +1032,8 @@ Resources:
       DBSubnetGroupDescription: !Sub "${AWS::StackName}-db-subnet-description"
       DBSubnetGroupName: !Sub "${AWS::StackName}-db-subnet"
       SubnetIds:
-        - !Ref Ec2SubnetPublic1
-        - !Ref Ec2SubnetPublic2
+        - !Ref Ec2SubnetPrivate1
+        - !Ref Ec2SubnetPrivate2
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-rds-db-subnet-group"
@@ -980,8 +1059,8 @@ Resources:
      - LogsLogGroupDbCluster
     Properties:
       AvailabilityZones:
-        - !GetAtt Ec2SubnetPublic1.AvailabilityZone
-        - !GetAtt Ec2SubnetPublic2.AvailabilityZone
+        - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
+        - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
       DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-cluster"
       DBClusterParameterGroupName:
@@ -1064,6 +1143,9 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
 
   LambdaFunctionRandomString:
+    DependsOn:
+     - Ec2SubnetRouteTableAssociationPrivate1
+     - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -1107,6 +1189,9 @@ Resources:
     Type: AWS::Lambda::Function
 
   LambdaFunctionRunTask:
+    DependsOn:
+     - Ec2SubnetRouteTableAssociationPrivate1
+     - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -1173,6 +1258,9 @@ Resources:
 
 
   LambdaFunctionRunTaskAndWait:
+    DependsOn:
+     - Ec2SubnetRouteTableAssociationPrivate1
+     - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -1258,6 +1346,9 @@ Resources:
 
 
   LambdaFunctionWaitForEfs:
+    DependsOn:
+     - Ec2SubnetRouteTableAssociationPrivate1
+     - Ec2SubnetRouteTableAssociationPrivate2
     Properties:
       Code:
         ZipFile: |
@@ -1311,8 +1402,6 @@ Resources:
       Timeout: 600
     Type: AWS::Lambda::Function
 
-
-
 # -- Run ECS tasks-------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
@@ -1339,12 +1428,12 @@ Resources:
         launchType: FARGATE
         networkConfiguration:
           awsvpcConfiguration:
-            assignPublicIp: ENABLED
+            assignPublicIp: DISABLED
             securityGroups:
               - !Ref EcsSecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPublic1
-              - !Ref Ec2SubnetPublic2
+              - !Ref Ec2SubnetPrivate1
+              - !Ref Ec2SubnetPrivate2
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -1366,12 +1455,12 @@ Resources:
         launchType: FARGATE
         networkConfiguration:
           awsvpcConfiguration:
-            assignPublicIp: ENABLED
+            assignPublicIp: DISABLED
             securityGroups:
               - !Ref EcsSecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPublic1
-              - !Ref Ec2SubnetPublic2
+              - !Ref Ec2SubnetPrivate1
+              - !Ref Ec2SubnetPrivate2
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -1394,12 +1483,12 @@ Resources:
         launchType: FARGATE
         networkConfiguration:
           awsvpcConfiguration:
-            assignPublicIp: ENABLED
+            assignPublicIp: DISABLED
             securityGroups:
               - !Ref EcsSecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPublic1
-              - !Ref Ec2SubnetPublic2
+              - !Ref Ec2SubnetPrivate1
+              - !Ref Ec2SubnetPrivate2
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -1421,12 +1510,12 @@ Resources:
         launchType: FARGATE
         networkConfiguration:
           awsvpcConfiguration:
-            assignPublicIp: ENABLED
+            assignPublicIp: DISABLED
             securityGroups:
               - !Ref EcsSecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPublic1
-              - !Ref Ec2SubnetPublic2
+              - !Ref Ec2SubnetPrivate1
+              - !Ref Ec2SubnetPrivate2
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -1451,12 +1540,12 @@ Resources:
         launchType: FARGATE
         networkConfiguration:
           awsvpcConfiguration:
-            assignPublicIp: ENABLED
+            assignPublicIp: DISABLED
             securityGroups:
               - !Ref EcsSecurityGroupLambdaRunner
             subnets:
-              - !Ref Ec2SubnetPublic1
-              - !Ref Ec2SubnetPublic2
+              - !Ref Ec2SubnetPrivate1
+              - !Ref Ec2SubnetPrivate2
         platformVersion: 1.4.0
         tags:
           - key: Name
@@ -2478,12 +2567,12 @@ Resources:
           TargetGroupArn: !Ref TargetGroupApiServer
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref EcsSecurityGroupInternal
           Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
+            - !Ref Ec2SubnetPrivate1
+            - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
       ServiceName: api-server
       Tags:
@@ -2503,12 +2592,12 @@ Resources:
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref EcsSecurityGroupInternal
           Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
+            - !Ref Ec2SubnetPrivate1
+            - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
       ServiceName: redoer
       Tags:
@@ -2529,12 +2618,12 @@ Resources:
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref EcsSecurityGroupInternal
           Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
+            - !Ref Ec2SubnetPrivate1
+            - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
       ServiceName: sshd
       Tags:
@@ -2554,12 +2643,12 @@ Resources:
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref EcsSecurityGroupInternal
           Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
+            - !Ref Ec2SubnetPrivate1
+            - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
       PropagateTags: TASK_DEFINITION
       ServiceName: stream-loader
@@ -2586,12 +2675,12 @@ Resources:
           TargetGroupArn: !Ref TargetGroupSwagger
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref EcsSecurityGroupInternal
           Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
+            - !Ref Ec2SubnetPrivate1
+            - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
       ServiceName: swagger
       Tags:
@@ -2617,12 +2706,12 @@ Resources:
           TargetGroupArn: !Ref TargetGroupWebApp
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref EcsSecurityGroupInternal
           Subnets:
-            - !Ref Ec2SubnetPublic1
-            - !Ref Ec2SubnetPublic2
+            - !Ref Ec2SubnetPrivate1
+            - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
       ServiceName: webapp
       Tags:
@@ -2730,17 +2819,23 @@ Outputs:
     Description: Url for Swagger
     Value: !Sub "http://${LoadBalancer.DNSName}:8080"
 
-  Subnet1:
-    Description: The ID of subnet 1
+  SubnetPublic1:
+    Description: The ID of public subnet
     Value: !Ref Ec2SubnetPublic1
     Export:
-      Name: !Sub "${AWS::StackName}-Subnet1"
+      Name: !Sub "${AWS::StackName}-subnet-public-1"
 
-  Subnet2:
-    Description: The ID of subnet 2
-    Value: !Ref Ec2SubnetPublic2
+  SubnetPrivate1:
+    Description: The ID of private subnet
+    Value: !Ref Ec2SubnetPrivate1
     Export:
-      Name: !Sub "${AWS::StackName}-Subnet2"
+      Name: !Sub "${AWS::StackName}-subnet-private-1"
+
+  SubnetPrivate2:
+    Description: The ID of private subnet
+    Value: !Ref Ec2SubnetPrivate2
+    Export:
+      Name: !Sub "${AWS::StackName}-subnet-private-2"
 
   WebAppUrl:
     Condition: IfRunWebApp
