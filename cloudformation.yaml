@@ -748,7 +748,7 @@ Resources:
 
   EcsSecurityGroupLambdaRunner:
     Properties:
-      GroupDescription: ECS Allowed Ports
+      GroupDescription: Lambda open ports.
       SecurityGroupEgress:
         -
           CidrIp: 0.0.0.0/0
@@ -763,7 +763,7 @@ Resources:
 
   EcsSecurityGroupInternal:
     Properties:
-      GroupDescription: ECS Allowed Ports
+      GroupDescription: ECS internal open ports.
       SecurityGroupEgress:
         -
           CidrIp: 0.0.0.0/0
@@ -878,7 +878,7 @@ Resources:
 
   EcsSecurityGroupLoadBalancerPrivate:
     Properties:
-      GroupDescription: Ports open to private load balancer.
+      GroupDescription: Private load balancer open ports.
       SecurityGroupEgress:
         -
           CidrIp: 0.0.0.0/0
@@ -903,7 +903,7 @@ Resources:
 
   EcsSecurityGroupLoadBalancerPublic:
     Properties:
-      GroupDescription: Ports open to public load balancer.
+      GroupDescription: Public load balancer open ports.
       SecurityGroupEgress:
         -
           CidrIp: 0.0.0.0/0
@@ -931,6 +931,28 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-public"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::SecurityGroup
+
+
+  EcsSecurityGroupSshd:
+    Properties:
+      GroupDescription: SSHD service open ports.
+      SecurityGroupEgress:
+        -
+          CidrIp: 0.0.0.0/0
+          Description: All
+          IpProtocol: "-1"
+      SecurityGroupIngress:
+        -
+          CidrIp: !Ref CidrInbound
+          Description: SSH
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-security-group-sshd"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::SecurityGroup
 
@@ -2279,7 +2301,9 @@ Resources:
           Essential: true
           Image: senzing/sshd:1.0.2
           LinuxParameters:
-            Capabilities: {}
+            Capabilities:
+              Add:
+                - SYS_PTRACE
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2659,6 +2683,7 @@ Resources:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
+      PropagateTags: TASK_DEFINITION
       ServiceName: api-server
       Tags:
         - Key: Name
@@ -2684,6 +2709,7 @@ Resources:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
+      PropagateTags: TASK_DEFINITION
       ServiceName: redoer
       Tags:
         - Key: Name
@@ -2705,11 +2731,14 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref EcsSecurityGroupInternal
+            - !Ref EcsSecurityGroupSshd
           Subnets:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
+            - !Ref Ec2SubnetPublic1
+            - !Ref Ec2SubnetPublic2
       PlatformVersion: 1.4.0
+      PropagateTags: TASK_DEFINITION
       ServiceName: sshd
       Tags:
         - Key: Name
@@ -2767,6 +2796,7 @@ Resources:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
+      PropagateTags: TASK_DEFINITION
       ServiceName: swagger
       Tags:
         - Key: Name
@@ -2798,6 +2828,7 @@ Resources:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
       PlatformVersion: 1.4.0
+      PropagateTags: TASK_DEFINITION
       ServiceName: webapp
       Tags:
         - Key: Name
@@ -2879,6 +2910,8 @@ Outputs:
 
   DatabaseUsername:
     Description: The administrative user name.
+    Export:
+      Name: !Sub "${AWS::StackName}-database-username"
     Value: !FindInMap [Constants, Database, Username]
 
   Ec2Vpc:
@@ -2889,14 +2922,20 @@ Outputs:
 
   Host:
     Description: Host name of public services
+    Export:
+      Name: !Sub "${AWS::StackName}-host"
     Value: !GetAtt LoadBalancerPublic.DNSName
 
   Queue:
     Description: URL of the input queue
+    Export:
+      Name: !Sub "${AWS::StackName}-queue"
     Value: !Ref SqsQueue
 
   QueueDeadLetter:
     Description: URL of the dead-letter queue
+    Export:
+      Name: !Sub "${AWS::StackName}-queue-deadletter"
     Value: !Ref SqsQueueDeadLetter
 
   SwaggerUrl:
@@ -2906,15 +2945,15 @@ Outputs:
 
   SubnetPublic1:
     Description: The ID of public subnet 1
-    Value: !Ref Ec2SubnetPublic1
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
+    Value: !Ref Ec2SubnetPublic1
 
   SubnetPublic2:
     Description: The ID of public subnet 2
-    Value: !Ref Ec2SubnetPublic2
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
+    Value: !Ref Ec2SubnetPublic2
 
   WebAppUrl:
     Condition: IfRunWebApp
