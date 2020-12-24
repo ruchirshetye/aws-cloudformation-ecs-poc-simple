@@ -876,9 +876,34 @@ Resources:
     Type: AWS::EC2::SecurityGroup
 
 
-  EcsSecurityGroupLoadBalancer:
+  EcsSecurityGroupLoadBalancerPrivate:
     Properties:
-      GroupDescription: Ports open to load balancer.
+      GroupDescription: Ports open to private load balancer.
+      SecurityGroupEgress:
+        -
+          CidrIp: 0.0.0.0/0
+          Description: All
+          IpProtocol: "-1"
+      SecurityGroupIngress:
+        -
+          CidrIp: !FindInMap
+            - VpcCidrs
+            - vpc
+            - cidr
+          Description: Senzing API server
+          FromPort: 8250
+          IpProtocol: tcp
+          ToPort: 8250
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-private"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::SecurityGroup
+
+
+  EcsSecurityGroupLoadBalancerPublic:
+    Properties:
+      GroupDescription: Ports open to public load balancer.
       SecurityGroupEgress:
         -
           CidrIp: 0.0.0.0/0
@@ -905,7 +930,7 @@ Resources:
           ToPort: 8080
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer"
+          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-public"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::SecurityGroup
 
@@ -966,12 +991,17 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
 
-  Ec2SubnetRouteTableAssociationPublic:
+  Ec2SubnetRouteTableAssociationPublic1:
     Properties:
       RouteTableId: !Ref Ec2RouteTablePublic
       SubnetId: !Ref Ec2SubnetPublic1
     Type: AWS::EC2::SubnetRouteTableAssociation
 
+  Ec2SubnetRouteTableAssociationPublic2:
+    Properties:
+      RouteTableId: !Ref Ec2RouteTablePublic
+      SubnetId: !Ref Ec2SubnetPublic2
+    Type: AWS::EC2::SubnetRouteTableAssociation
 
   Ec2SubnetRouteTableAssociationPrivate1:
     Properties:
@@ -1245,7 +1275,7 @@ Resources:
               finally:
                   cfnresponse.send(event, context, result, {})
 
-      Description: Runs an ECS task
+      Description: Runs an ECS task.
       FunctionName: !Sub "${AWS::StackName}-lambda-run-task"
       Handler: index.handler
       Role: !GetAtt IamRoleLambda.Arn
@@ -1333,7 +1363,7 @@ Resources:
               finally:
                   cfnresponse.send(event, context, result, {})
 
-      Description: Runs an ECS task and waits until completion
+      Description: Runs an ECS task and waits until completion.
       FunctionName: !Sub "${AWS::StackName}-lambda-run-task-and-wait"
       Handler: index.handler
       Role: !GetAtt IamRoleLambda.Arn
@@ -1576,25 +1606,40 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-loadbalancer.html
 
-  LoadBalancer:
+  LoadBalancerPublic:
     Properties:
       Scheme: internet-facing
       SecurityGroups:
-        - !Ref EcsSecurityGroupLoadBalancer
+        - !Ref EcsSecurityGroupLoadBalancerPublic
       Subnets:
         - !Ref Ec2SubnetPublic1
         - !Ref Ec2SubnetPublic2
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-load-balancer"
+          Value: !Sub "${AWS::StackName}-load-balancer-public"
+      Type: application
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+
+
+  LoadBalancerPrivate:
+    Properties:
+      Scheme: internal
+      SecurityGroups:
+        - !Ref EcsSecurityGroupLoadBalancerPrivate
+      Subnets:
+        - !Ref Ec2SubnetPrivate1
+        - !Ref Ec2SubnetPrivate2
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-load-balancer-private"
       Type: application
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
 
-  TargetGroupApiServer:
+  TargetGroupApiServerPrivate:
     DependsOn:
-     - LoadBalancer
+     - LoadBalancerPrivate
     Properties:
       HealthCheckIntervalSeconds: 80
       HealthCheckPath: "/heartbeat"
@@ -1607,7 +1652,32 @@ Resources:
       Protocol: HTTP
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-target-group-api-server"
+          Value: !Sub "${AWS::StackName}-target-group-api-server-private"
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '60'
+      TargetType: ip
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+
+
+  TargetGroupApiServerPublic:
+    DependsOn:
+     - LoadBalancerPublic
+    Properties:
+      HealthCheckIntervalSeconds: 80
+      HealthCheckPath: "/heartbeat"
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 50
+      HealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200-299
+      Port: 8250
+      Protocol: HTTP
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-target-group-api-server-public"
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
@@ -1620,7 +1690,7 @@ Resources:
   TargetGroupSwagger:
     Condition: IfRunSwagger
     DependsOn:
-     - LoadBalancer
+     - LoadBalancerPublic
     Properties:
       HealthCheckIntervalSeconds: 80
       HealthCheckPath: "/"
@@ -1646,7 +1716,7 @@ Resources:
   TargetGroupWebApp:
     Condition: IfRunWebApp
     DependsOn:
-     - LoadBalancer
+     - LoadBalancerPublic
     Properties:
       HealthCheckIntervalSeconds: 80
       HealthCheckPath: "/"
@@ -1670,12 +1740,23 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
 
-  ListenerApiServer:
+  ListenerApiServerPrivate:
     Properties:
       DefaultActions:
-        - TargetGroupArn: !Ref TargetGroupApiServer
+        - TargetGroupArn: !Ref TargetGroupApiServerPrivate
           Type: forward
-      LoadBalancerArn: !Ref LoadBalancer
+      LoadBalancerArn: !Ref LoadBalancerPrivate
+      Port: 8250
+      Protocol: HTTP
+    Type: AWS::ElasticLoadBalancingV2::Listener
+
+
+  ListenerApiServerPublic:
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroupApiServerPublic
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancerPublic
       Port: 8250
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -1687,7 +1768,7 @@ Resources:
       DefaultActions:
         - TargetGroupArn: !Ref TargetGroupSwagger
           Type: forward
-      LoadBalancerArn: !Ref LoadBalancer
+      LoadBalancerArn: !Ref LoadBalancerPublic
       Port: 8080
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -1699,7 +1780,7 @@ Resources:
       DefaultActions:
         - TargetGroupArn: !Ref TargetGroupWebApp
           Type: forward
-      LoadBalancerArn: !Ref LoadBalancer
+      LoadBalancerArn: !Ref LoadBalancerPublic
       Port: 8251
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -2513,7 +2594,7 @@ Resources:
           Environment:
             -
               Name: SENZING_API_SERVER_URL
-              Value: !Sub "http://${LoadBalancer.DNSName}:8250"
+              Value: !Sub "http://${LoadBalancerPrivate.DNSName}:8250"
             -
               Name: SENZING_WEB_SERVER_PORT
               Value: "8251"
@@ -2564,7 +2645,11 @@ Resources:
         -
           ContainerPort: 8250
           ContainerName: api-server
-          TargetGroupArn: !Ref TargetGroupApiServer
+          TargetGroupArn: !Ref TargetGroupApiServerPrivate
+        -
+          ContainerPort: 8250
+          ContainerName: api-server
+          TargetGroupArn: !Ref TargetGroupApiServerPublic
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
@@ -2618,7 +2703,7 @@ Resources:
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
+          AssignPublicIp: ENABLED
           SecurityGroups:
             - !Ref EcsSecurityGroupInternal
           Subnets:
@@ -2766,7 +2851,7 @@ Outputs:
 
   ApiServerHeartbeatUrl:
     Description: Url for Swagger
-    Value: !Sub "http://${LoadBalancer.DNSName}:8250/heartbeat"
+    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8250/heartbeat"
 
   DatabaseHost:
     Description: The connection endpoint for the DB cluster.
@@ -2804,7 +2889,7 @@ Outputs:
 
   Host:
     Description: Host name of public services
-    Value: !GetAtt LoadBalancer.DNSName
+    Value: !GetAtt LoadBalancerPublic.DNSName
 
   Queue:
     Description: URL of the input queue
@@ -2817,27 +2902,21 @@ Outputs:
   SwaggerUrl:
     Condition: IfRunSwagger
     Description: Url for Swagger
-    Value: !Sub "http://${LoadBalancer.DNSName}:8080"
+    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8080"
 
   SubnetPublic1:
-    Description: The ID of public subnet
+    Description: The ID of public subnet 1
     Value: !Ref Ec2SubnetPublic1
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
 
-  SubnetPrivate1:
-    Description: The ID of private subnet
-    Value: !Ref Ec2SubnetPrivate1
+  SubnetPublic2:
+    Description: The ID of public subnet 2
+    Value: !Ref Ec2SubnetPublic2
     Export:
-      Name: !Sub "${AWS::StackName}-subnet-private-1"
-
-  SubnetPrivate2:
-    Description: The ID of private subnet
-    Value: !Ref Ec2SubnetPrivate2
-    Export:
-      Name: !Sub "${AWS::StackName}-subnet-private-2"
+      Name: !Sub "${AWS::StackName}-subnet-public-2"
 
   WebAppUrl:
     Condition: IfRunWebApp
     Description: Url for Senzing Web App
-    Value: !Sub "http://${LoadBalancer.DNSName}:8251"
+    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8251"
