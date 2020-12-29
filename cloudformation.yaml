@@ -11,13 +11,12 @@ AWSTemplateFormatVersion: 2010-09-09
 # TODO: Cleanup "nag" errors and warnings
 # TODO: In Rules, fix detection of empty strings
 # TODO: Add Jupyter
-# TODO: Add X-term (be aware of required stickiness)
 # TODO: Autoscale Entity Search Web App
 # TODO: User-supplied password for "senzing/sshd" (Needs support in GitHub project)
-# TODO: Fix "Case sensitivity in RdsDbSubnetGroup" https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
+# TODO: Make /var/senzing writeable for X-Term
 
 Description: >-
-  Senzing aws-cloudformation-ecs-poc-simple Version: 0.0.1
+  Senzing aws-cloudformation-ecs-poc-simple Version: 0.0.2
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -50,7 +49,6 @@ Metadata:
         default: >-
           Required if inserting more than 100K records.
           Senzing license as base64 encoded string.
-
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -426,25 +424,6 @@ Resources:
     Type: AWS::IAM::Role
 
 
-  IamRoleXterm:
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          -
-            Action:
-              - sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service:
-                - ecs-tasks.amazonaws.com
-        Version: '2012-10-17'
-      Description: !Sub "${AWS::StackName}-iam-role-xterm"
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-iam-role-xterm"
-    Type: AWS::IAM::Role
-
-
   IamRoleWebApp:
     Properties:
       AssumeRolePolicyDocument:
@@ -461,6 +440,25 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-iam-role-web-app"
+    Type: AWS::IAM::Role
+
+
+  IamRoleXterm:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+        Version: '2012-10-17'
+      Description: !Sub "${AWS::StackName}-iam-role-xterm"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-iam-role-xterm"
     Type: AWS::IAM::Role
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
@@ -1943,7 +1941,6 @@ Resources:
       Port: 5000
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
-
 
 # -- EcsTaskDefinition --------------------------------------------------------
 
