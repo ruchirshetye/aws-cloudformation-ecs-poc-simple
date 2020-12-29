@@ -13,7 +13,6 @@ AWSTemplateFormatVersion: 2010-09-09
 # TODO: Add Jupyter
 # TODO: Autoscale Entity Search Web App
 # TODO: User-supplied password for "senzing/sshd" (Needs support in GitHub project)
-# TODO: Make /var/senzing writeable for X-Term
 
 Description: >-
   Senzing aws-cloudformation-ecs-poc-simple Version: 0.0.2
@@ -644,7 +643,9 @@ Resources:
 
   LogsLogGroupDbCluster:
     Properties:
-      LogGroupName: !Sub "/aws/rds/cluster/${AWS::StackName}-aurora-cluster/postgresql"
+      LogGroupName: !Sub
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-cluster/postgresql"
+        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
   LogsLogGroupLambdaWaitForEfs:
@@ -1053,11 +1054,13 @@ Resources:
       SubnetId: !Ref Ec2SubnetPublic1
     Type: AWS::EC2::SubnetRouteTableAssociation
 
+
   Ec2SubnetRouteTableAssociationPublic2:
     Properties:
       RouteTableId: !Ref Ec2RouteTablePublic
       SubnetId: !Ref Ec2SubnetPublic2
     Type: AWS::EC2::SubnetRouteTableAssociation
+
 
   Ec2SubnetRouteTableAssociationPrivate1:
     Properties:
@@ -2068,6 +2071,11 @@ Resources:
             - '/efs/etc'
             - '&&'
             - 'mkdir'
+            - '-p'
+            - '/efs/var'
+            - '&&'
+            - 'chmod'
+            - '777'
             - '/efs/var'
           Essential: true
           Image: busybox
