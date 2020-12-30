@@ -13,8 +13,6 @@ AWSTemplateFormatVersion: 2010-09-09
 # TODO: Autoscale Entity Search Web App
 # TODO: User-supplied password for "senzing/sshd" (Needs support in GitHub project)
 # TODO: Jupyter inconsistent connection
-# TODO: Remove unnecessary DependsOn for EcsTaskDefinition***
-# TODO: Add /var/opt/senzing/shared (mkdir -m 777 -p /efs/var/shared)
 
 Description: >-
   Senzing aws-cloudformation-ecs-poc-simple Version: 0.0.2
@@ -59,9 +57,9 @@ Metadata:
 Parameters:
 
   AcceptEula:
-    AllowedPattern: '^$|^I_ACCEPT_THE_SENZING_EULA$'
+    AllowedPattern: '.+|^I_ACCEPT_THE_SENZING_EULA$'
     ConstraintDescription: AcceptEula parameter must be 'I_ACCEPT_THE_SENZING_EULA'
-    Default: ''
+    Default: '_'
     Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/senzing-demo-full-stack#accepteula'
     Type: String
 
@@ -1747,6 +1745,14 @@ Resources:
     Type: Custom::LambdaRunnerInitSenzing
 
 
+  LambdaRunnerSshPassword:
+    Properties:
+      ClusterId: !Ref EcsCluster
+      Length: 16
+      ServiceToken: !GetAtt LambdaFunctionRandomString.Arn
+    Type: Custom::LambdaRunnerSshPassword
+
+
   LambdaRunnerStackNameAsLower:
     Properties:
       ClusterId: !Ref EcsCluster
@@ -2091,9 +2097,6 @@ Resources:
 
   EcsTaskDefinitionApiServer:
     Condition: IfRunApiServer
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
@@ -2194,9 +2197,6 @@ Resources:
 
 
   EcsTaskDefinitionInitEfs:
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
@@ -2216,6 +2216,12 @@ Resources:
             - '777'
             - '-p'
             - '/efs/var/jupyter'
+            - '&&'
+            - 'mkdir'
+            - '-m'
+            - '777'
+            - '-p'
+            - '/efs/var/shared'
           Essential: true
           Image: busybox
           LinuxParameters:
@@ -2257,9 +2263,6 @@ Resources:
 
 
   EcsTaskDefinitionInitPostgres:
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
@@ -2315,9 +2318,6 @@ Resources:
 
 
   EcsTaskDefinitionInitSenzing:
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
@@ -2396,9 +2396,6 @@ Resources:
 
 
   EcsTaskDefinitionInstallSenzing:
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
@@ -2464,9 +2461,6 @@ Resources:
 
 
   EcsTaskDefinitionJupyter:
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
@@ -2562,9 +2556,6 @@ Resources:
 
 
   EcsTaskDefinitionRedoer:
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
@@ -2676,12 +2667,13 @@ Resources:
 
 
   EcsTaskDefinitionSshd:
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
+          Environment:
+            -
+              Name: ROOT_PASS
+              Value: !GetAtt LambdaRunnerSshPassword.RandomString
           Essential: true
           Image: senzing/sshd:1.0.2
           LinuxParameters:
@@ -2758,9 +2750,6 @@ Resources:
 
 
   EcsTaskDefinitionStreamLoader:
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
@@ -2890,9 +2879,6 @@ Resources:
 
 
   EcsTaskDefinitionStreamProducer:
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
@@ -2993,9 +2979,6 @@ Resources:
 
 
   EcsTaskDefinitionWebApp:
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
@@ -3039,9 +3022,6 @@ Resources:
 
 
   EcsTaskDefinitionXterm:
-    DependsOn:
-      - EfsMountTarget1
-      - EfsMountTarget2
     Properties:
       ContainerDefinitions:
         -
@@ -3417,7 +3397,7 @@ Outputs:
 
   ApiServerHeartbeatUrl:
     Condition: IfRunApiServer
-    Description: Url for Swagger
+    Description: Url for Swagger.
     Value: !Sub "http://${LoadBalancerPublic.DNSName}:8250/heartbeat"
 
   DatabaseHost:
@@ -3451,57 +3431,63 @@ Outputs:
     Value: !FindInMap [Constants, Database, Username]
 
   Ec2Vpc:
-    Description: The ID of the VPC
+    Description: The ID of the VPC.
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !Ref Ec2Vpc
 
   Host:
-    Description: Host name of public services
+    Description: Host name of public services.
     Export:
       Name: !Sub "${AWS::StackName}-host"
     Value: !GetAtt LoadBalancerPublic.DNSName
 
   JupyterUrl:
     Condition: IfRunJupyter
-    Description: Url for Jupyter Noteboks
+    Description: Url for Jupyter Noteboks.
     Value: !Sub "http://${LoadBalancerPublic.DNSName}:8888"
 
   Queue:
-    Description: URL of the input queue
+    Description: URL of the input queue.
     Export:
       Name: !Sub "${AWS::StackName}-queue"
     Value: !Ref SqsQueue
 
   QueueDeadLetter:
-    Description: URL of the dead-letter queue
+    Description: URL of the dead-letter queue.
     Export:
       Name: !Sub "${AWS::StackName}-queue-deadletter"
     Value: !Ref SqsQueueDeadLetter
 
+  SshPassword:
+    Description: The randomly generated password for SSH access.
+    Export:
+      Name: !Sub "${AWS::StackName}-ssh-password"
+    Value: !GetAtt LambdaRunnerSshPassword.RandomString
+
   SwaggerUrl:
     Condition: IfRunSwagger
-    Description: Url for Swagger
+    Description: Url for Swagger.
     Value: !Sub "http://${LoadBalancerPublic.DNSName}:8080"
 
   SubnetPublic1:
-    Description: The ID of public subnet 1
+    Description: The ID of public subnet 1.
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
     Value: !Ref Ec2SubnetPublic1
 
   SubnetPublic2:
-    Description: The ID of public subnet 2
+    Description: The ID of public subnet 2.
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
   WebAppUrl:
     Condition: IfRunWebApp
-    Description: Url for Senzing Web App
+    Description: Url for Senzing Web App.
     Value: !Sub "http://${LoadBalancerPublic.DNSName}:8251"
 
   XtermUrl:
     Condition: IfRunXterm
-    Description: Url for Senzing X-Term
+    Description: Url for Senzing X-Term.
     Value: !Sub "http://${LoadBalancerPublic.DNSName}:5000"
