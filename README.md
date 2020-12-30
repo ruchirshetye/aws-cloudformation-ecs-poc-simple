@@ -1,4 +1,4 @@
-# aws-cloudformation-ecs-Proposed Simplified Cloudformation scenario
+# aws-cloudformation-ecs-poc-simple
 
 ## How to deploy
 
@@ -20,6 +20,7 @@
 1. Visit [AWS CloudFormation console](https://console.aws.amazon.com/cloudformation/home).
     1. Make sure correct AWS region is selected.
 1. Wait until "senzing-poc" status is `CREATE_COMPLETE`.
+    1. May have to hit the refresh button a few times to get updated information.
 1. Click on "senzing-poc" stack
 1. Click on "Outputs" tab
 1. Click on "WebAppUrl" value
