@@ -1,4 +1,4 @@
-# Cloudformation: aws-cloudformation-ecs-poc-simple
+# aws-cloudformation-ecs-poc-simple
 
 ## Synopsis
 
@@ -40,11 +40,13 @@ Arrows represent data flow.
 This docker formation brings up the following docker containers:
 
 1. *[senzing/entity-web-search-app](https://github.com/Senzing/entity-search-web-app)*
+1. *[senzing/jupyter](https://github.com/Senzing/docker-jupyter)*
 1. *[senzing/redoer](https://github.com/Senzing/redoer)*
 1. *[senzing/senzing-api-server](https://github.com/Senzing/senzing-api-server)*
 1. *[senzing/sshd](https://github.com/Senzing/docker-sshd)*
 1. *[senzing/stream-loader](https://github.com/Senzing/stream-loader)*
 1. *[senzing/stream-producer](https://github.com/Senzing/stream-producer)*
+1. *[senzing/xterm](https://github.com/Senzing/docker-xterm)*
 
 Help for
 [aws-cloudformation-ecs-poc-simple](https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/aws-cloudformation-ecs-poc-simple).
@@ -89,12 +91,12 @@ describing where we can improve.   Now on with the show...
 
 ### Launch AWS Cloudformation
 
-1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https://s3-us-west-1.amazonaws.com/cf-templates-xoqvergspzx7-us-west-1/2020357pXi-cloudformation.yaml).
+1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3-external-1.amazonaws.com/cf-templates-xoqvergspzx7-us-east-1/2020365v5b-cloudformation.yaml)
 1. In lower-right, click on "Next" button.
 1. In **Specify stack details**
     1. In **Stack name**
         1. Enter an identifier of your choosing.
-           Example: "senzing-demo"
+           Example: "senzing-poc"
     1. In **Parameters**
         1. In **Senzing installation**
             1. Accept the End User Licence Agreement
@@ -271,7 +273,9 @@ TODO:
 
 ### SwaggerUrl
 
-TODO:
+1. **Synopsis:**
+   A URL showing how to reach the
+   [Swagger User Interface](https://github.com/swagger-api/swagger-ui).
 
 ### WebAppUrl
 
@@ -281,4 +285,6 @@ TODO:
 
 ### XtermUrl
 
-TODO:
+1. **Synopsis:**
+   A URL showing how to reach the
+   [Senzing Xterm](https://github.com/Senzing/docker-xterm).
