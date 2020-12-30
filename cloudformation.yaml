@@ -12,6 +12,9 @@ AWSTemplateFormatVersion: 2010-09-09
 # TODO: In Rules, fix detection of empty strings
 # TODO: Autoscale Entity Search Web App
 # TODO: User-supplied password for "senzing/sshd" (Needs support in GitHub project)
+# TODO: Jupyter inconsistent connection
+# TODO: Remove unnecessary DependsOn for EcsTaskDefinition***
+# TODO: Add /var/opt/senzing/shared (mkdir -m 777 -p /efs/var/shared)
 
 Description: >-
   Senzing aws-cloudformation-ecs-poc-simple Version: 0.0.2
@@ -1909,7 +1912,7 @@ Resources:
         Value: '60'
       -
         Key: stickiness.enabled
-        Value: 'false'
+        Value: 'true'
       -
         Key: stickiness.type
         Value: lb_cookie
@@ -1997,7 +2000,7 @@ Resources:
         Value: '60'
       -
         Key: stickiness.enabled
-        Value: 'false'
+        Value: 'true'
       -
         Key: stickiness.type
         Value: lb_cookie
@@ -2209,12 +2212,10 @@ Resources:
             - '/efs/etc'
             - '&&'
             - 'mkdir'
-            - '-p'
-            - '/efs/var'
-            - '&&'
-            - 'chmod'
+            - '-m'
             - '777'
-            - '/efs/var'
+            - '-p'
+            - '/efs/var/jupyter'
           Essential: true
           Image: busybox
           LinuxParameters:
@@ -2492,6 +2493,23 @@ Resources:
               awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: service
+          MountPoints:
+            -
+              SourceVolume: senzing-data-version-dir
+              ContainerPath: /opt/senzing/data
+              ReadOnly: true
+            -
+              SourceVolume: senzing-etc-dir
+              ContainerPath: /etc/opt/senzing
+              ReadOnly: true
+            -
+              SourceVolume: senzing-g2-dir
+              ContainerPath: /opt/senzing/g2
+              ReadOnly: true
+            -
+              SourceVolume: senzing-var-dir
+              ContainerPath: /notebooks/shared
+              ReadOnly: false
           Name: jupyter
           PortMappings:
             - ContainerPort: 8888
@@ -2511,6 +2529,35 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ecs-task-definition-jupyter"
       TaskRoleArn: !GetAtt IamRoleJupyter.Arn
+      Volumes:
+        -
+          Name: senzing-data-version-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /data/1.0.0
+        -
+          Name: senzing-etc-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /etc
+        -
+          Name: senzing-g2-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /g2
+        -
+          Name: senzing-var-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /var/jupyter
     Type: AWS::ECS::TaskDefinition
 
 
