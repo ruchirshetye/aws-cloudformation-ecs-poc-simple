@@ -191,7 +191,8 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 ### ADescriptionOfOutputs
 
-TODO:
+1. **Synopsis:**
+   A URL showing how to reach this page.
 
 ### ApiServerHeartbeatUrl
 
@@ -200,6 +201,7 @@ TODO:
    [Senzing API Server](https://github.com/Senzing/senzing-api-server)
    directly.
    The `/heartbeat` URI path simply demonstrates that the API server is responding.
+1. **Details:**
    For more URIs, see
    [SwaggerUrl output value](#swaggerurl).
 
@@ -212,44 +214,55 @@ FIXME: will need to be updated when clustering is enabled.
 
 ### DatabaseName
 
-TODO:
+1. **Synopsis:**
+   The name of the database.
+1. **Details:**
+   Usually "G2".
 
 ### DatabasePassword
 
-TODO:
+1. **Synopsis:**
+   The randomly-generated administrative password for authenticating with the database.
 
 ### DatabasePort
 
 1. **Synopsis:**
    The port used to access each of the databases.
+1. **Details:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabaseUsername
 
-TODO:
+1. **Synopsis:**
+   The administrative user name for authenticating with the database.
 
 ### Ec2Vpc
 
 1. **Synopsis:**
    The AWS Resource ID of the Virtual Private Cloud (VPC).
+1. **Details:**
    More information at [AWS VPC Console](https://console.aws.amazon.com/vpc/home?#vpcs:).
 
 ### Host
 
 1. **Synopsis:**
    The hostname of the loadbalancer that is a proxy to all of the services.
+1. **Details:**
    More information at [AWS Load Balancers console](https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers:).
    Also used as the `host` value when using [SwaggerUrl](#swaggerurl).
 
 ### JupyterUrl
 
-TODO:
+1. **Synopsis:**
+   A URL showing how to reach the
+   [Jupyter Notebooks](https://github.com/Senzing/docker-jupyter).
 
 ### Queue
 
 1. **Synopsis:**
    The queue from which records are ingested into Senzing Engine.
    In otherwords, this is the queue where records are sent to be inserted into the Senzing Engine.
+1. **Details:**
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
 
 ### QueueDeadLetter
@@ -257,25 +270,42 @@ TODO:
 1. **Synopsis:**
    The queue to which records that are not able to be ingested into Senzing Engine are sent.
    In otherwords, if the JSON message is malformed, or Senzing d into the Senzing Engine.
+1. **Details:**
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
 
 ### SshPassword
 
-TODO:
+1. **Synopsis:**
+   A randomly generated password to be used with the sshd tasks.
 
 ### SubnetPublic1
 
-TODO:
+1. **Synopsis:**
+   The first of two public subnets created.
+1. **Details:**
+   See the subnet having a Name in the form `{StackName}-ec2-subnet-public-1` in the
+   [AWS Virtual Private Cloud console](https://console.aws.amazon.com/vpc/home?#subnets:).
 
 ### SubnetPublic2
 
-TODO:
+1. **Synopsis:**
+   The second of two public subnets created.
+1. **Details:**
+   See the subnet having a Name in the form `{StackName}-ec2-subnet-public-2` in the
+   [AWS Virtual Private Cloud console](https://console.aws.amazon.com/vpc/home?#subnets:).
 
 ### SwaggerUrl
 
 1. **Synopsis:**
    A URL showing how to reach the
    [Swagger User Interface](https://github.com/swagger-api/swagger-ui).
+1. **Usage:**
+   To access the Senzing API server
+    1. Using the URL, visit the `SwaggerUrl` webpage.
+    1. In **Servers**
+        1. From the drop-down, select `{protocol}://{host}:{port}`.
+        1. In the **Host** field, enter the value of [Host](#host).
+    1. The HTTP URIs will now access the deployed Senzing API server.
 
 ### WebAppUrl
 
@@ -288,3 +318,6 @@ TODO:
 1. **Synopsis:**
    A URL showing how to reach the
    [Senzing Xterm](https://github.com/Senzing/docker-xterm).
+1. **Usage:**
+   From this Linux terminal, `G2Command.py`, `G2Explorer.py`, `G2ConfigTool.py`,
+   can be run.
