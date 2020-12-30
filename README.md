@@ -1,19 +1,28 @@
 # aws-cloudformation-ecs-poc-simple
 
-## How to deploy
+## Synopsis
 
-1. Click URL with location of template
-   Example: [https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3-external-1.amazonaws.com/cf-templates-xoqvergspzx7-us-east-1/2020365v5b-cloudformation.yaml](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3-external-1.amazonaws.com/cf-templates-xoqvergspzx7-us-east-1/2020365v5b-cloudformation.yaml)
-1. Click "Next" button.
-1. In "Parameters" section:
-    1. Agrees to EULA
-    1. Optionally adds Senzing License (base64 encoded)
-    1. Enters Security CIDR  (This is a tricky step)
-1. Click "Next" button.
-1. Click "Next" button again.
-1. In "Capabilities" section:
-    1. Check "[x] I acknowledge that AWS CloudFormation might create IAM resources."
-1. Click "Create stack" button.
+The `aws-cloudformation-ecs-poc-simple` demonstrates a Senzing deployment using an AWS Cloudformation template.
+
+Detailed instructions at
+[hub.senzing.com/aws-cloudformation-ecs-poc-simple](http://senzing.github.io/aws-cloudformation-ecs-poc-simple)
+
+## How to deploy without much thinking
+
+1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3-external-1.amazonaws.com/cf-templates-xoqvergspzx7-us-east-1/2020365v5b-cloudformation.yaml)
+1. In lower-right, click on "Next" button.
+1. In **Specify stack details**
+    1. In **Parameters**
+        1. In **Senzing installation**
+            1. Accept the End User Licence Agreement
+    1. Other parameters are optional.
+    1. In lower-right, click "Next" button.
+1. In **Configure stack options**
+    1. In lower-right, click "Next" button.
+1. In **Review senzing-poc**
+    1. Near the bottom, in **Capabilities**
+        1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
+    1. In lower-right, click "Create stack" button.
 
 ## Using deployment
 
