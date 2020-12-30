@@ -10,7 +10,6 @@ AWSTemplateFormatVersion: 2010-09-09
 # TODO: Add Senzing database cluster
 # TODO: Cleanup "nag" errors and warnings
 # TODO: In Rules, fix detection of empty strings
-# TODO: Add Jupyter
 # TODO: Autoscale Entity Search Web App
 # TODO: User-supplied password for "senzing/sshd" (Needs support in GitHub project)
 
@@ -107,12 +106,18 @@ Mappings:
       Name: G2
       Username: senzing
     Run:
+      ApiServer: Yes
+      Jupyter: Yes
+      Redoer: Yes
       Sshd: Yes
+      StreamLoader: Yes
       StreamProducer: Yes
       Swagger: Yes
       VpcFloLogs: No
       WebApp: Yes
       Xterm: Yes
+    Stack:
+      Name: poc-simple
     StreamProducer:
       InputUrl: https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz
       RecordMax: 100000
@@ -137,8 +142,24 @@ Mappings:
 
 Conditions:
 
+  IfRunApiServer: !Equals
+    - !FindInMap [Constants, Run, ApiServer]
+    - Yes
+
+  IfRunJupyter: !Equals
+    - !FindInMap [Constants, Run, Jupyter]
+    - Yes
+
+  IfRunRedoer: !Equals
+    - !FindInMap [Constants, Run, Redoer]
+    - Yes
+
   IfRunSshd: !Equals
     - !FindInMap [Constants, Run, Sshd]
+    - Yes
+
+  IfRunStreamLoader: !Equals
+    - !FindInMap [Constants, Run, StreamLoader]
     - Yes
 
   IfRunStreamProducer: !Equals
@@ -302,6 +323,25 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-iam-role-install-senzing"
+    Type: AWS::IAM::Role
+
+
+  IamRoleJupyter:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+        Version: '2012-10-17'
+      Description: !Sub "${AWS::StackName}-iam-role-jupyter"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-iam-role-jupyter"
     Type: AWS::IAM::Role
 
 
@@ -520,6 +560,7 @@ Resources:
        - !Ref IamRoleInitPostgres
        - !Ref IamRoleInitSenzing
        - !Ref IamRoleInstallSenzing
+       - !Ref IamRoleJupyter
        - !Ref IamRoleLambda
        - !Ref IamRoleRedoer
        - !Ref IamRoleSshd
@@ -566,6 +607,7 @@ Resources:
         Version: '2012-10-17'
       Roles:
        - !Ref IamRoleApiServer
+       - !Ref IamRoleJupyter
        - !Ref IamRoleLambda
        - !Ref IamRoleRedoer
        - !Ref IamRoleSshd
@@ -618,7 +660,9 @@ Resources:
 
   LogsLogGroupMain:
     Properties:
-      LogGroupName: !Sub "${AWS::StackName}-log-group"
+      LogGroupName: !Sub
+        - "/senzing/${StackName}/${AWS::StackName}"
+        - StackName: !FindInMap [Constants, Stack, Name]
     Type: AWS::Logs::LogGroup
 
   LogsLogGroupLambdaRandomString:
@@ -775,7 +819,7 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
 
-  EcsSecurityGroupLambdaRunner:
+  Ec2SecurityGroupLambdaRunner:
     Properties:
       GroupDescription: Lambda open ports.
       SecurityGroupEgress:
@@ -790,7 +834,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
 
 
-  EcsSecurityGroupInternal:
+  Ec2SecurityGroupInternal:
     Properties:
       GroupDescription: ECS internal open ports.
       SecurityGroupEgress:
@@ -905,7 +949,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
 
 
-  EcsSecurityGroupLoadBalancerPrivate:
+  Ec2SecurityGroupLoadBalancerPrivate:
     Properties:
       GroupDescription: Private load balancer open ports.
       SecurityGroupEgress:
@@ -930,7 +974,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
 
 
-  EcsSecurityGroupLoadBalancerPublic:
+  Ec2SecurityGroupLoadBalancerPublic:
     Properties:
       GroupDescription: Public load balancer open ports.
       SecurityGroupEgress:
@@ -938,31 +982,6 @@ Resources:
           CidrIp: 0.0.0.0/0
           Description: All
           IpProtocol: '-1'
-      SecurityGroupIngress:
-        -
-          CidrIp: !Ref CidrInbound
-          Description: Senzing X-term
-          FromPort: 5000
-          IpProtocol: tcp
-          ToPort: 5000
-        -
-          CidrIp: !Ref CidrInbound
-          Description: Senzing API server
-          FromPort: 8250
-          IpProtocol: tcp
-          ToPort: 8250
-        -
-          CidrIp: !Ref CidrInbound
-          Description: Senzing Web App
-          FromPort: 8251
-          IpProtocol: tcp
-          ToPort: 8251
-        -
-          CidrIp: !Ref CidrInbound
-          Description: Swagger UI
-          FromPort: 8080
-          IpProtocol: tcp
-          ToPort: 8080
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-public"
@@ -970,7 +989,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
 
 
-  EcsSecurityGroupSshd:
+  Ec2SecurityGroupSshd:
     Properties:
       GroupDescription: SSHD service open ports.
       SecurityGroupEgress:
@@ -978,18 +997,84 @@ Resources:
           CidrIp: 0.0.0.0/0
           Description: All
           IpProtocol: '-1'
-      SecurityGroupIngress:
-        -
-          CidrIp: !Ref CidrInbound
-          Description: SSH
-          FromPort: 22
-          IpProtocol: tcp
-          ToPort: 22
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ec2-security-group-sshd"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::SecurityGroup
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
+
+  Ec2SecurityGroupIngresApiServerPublic:
+    Condition: IfRunApiServer
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: Senzing API server
+      FromPort: 8250
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      ToPort: 8250
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngresJupyter:
+    Condition: IfRunJupyter
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: Jupyter UI
+      FromPort: 8888
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      ToPort: 8888
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngresSsh:
+    Condition: IfRunSshd
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: SSH
+      FromPort: 22
+      GroupId: !Ref Ec2SecurityGroupSshd
+      IpProtocol: tcp
+      ToPort: 22
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngresSwagger:
+    Condition: IfRunSwagger
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: Swagger UI
+      FromPort: 8080
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      ToPort: 8080
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngresWebApp:
+    Condition: IfRunWebApp
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: Senzing Web App
+      FromPort: 8251
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      ToPort: 8251
+    Type: AWS::EC2::SecurityGroupIngress
+
+
+  Ec2SecurityGroupIngresXterm:
+    Condition: IfRunXterm
+    Properties:
+      CidrIp: !Ref CidrInbound
+      Description: Senzing X-term
+      FromPort: 5000
+      GroupId: !Ref Ec2SecurityGroupLoadBalancerPublic
+      IpProtocol: tcp
+      ToPort: 5000
+    Type: AWS::EC2::SecurityGroupIngress
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
 
@@ -1096,7 +1181,7 @@ Resources:
       FileSystemId:
         Ref: EfsFileSystem
       SecurityGroups:
-        - Ref: EcsSecurityGroupInternal
+        - Ref: Ec2SecurityGroupInternal
       SubnetId:
         Ref: Ec2SubnetPrivate1
     Type: AWS::EFS::MountTarget
@@ -1107,7 +1192,7 @@ Resources:
       FileSystemId:
         Ref: EfsFileSystem
       SecurityGroups:
-        - Ref: EcsSecurityGroupInternal
+        - Ref: Ec2SecurityGroupInternal
       SubnetId:
         Ref: Ec2SubnetPrivate2
     Type: AWS::EFS::MountTarget
@@ -1181,7 +1266,7 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-rds-db-cluster"
       VpcSecurityGroupIds:
-        - !Ref EcsSecurityGroupInternal
+        - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
 
 # -- Queue --------------------------------------------------------------------
@@ -1564,7 +1649,7 @@ Resources:
           awsvpcConfiguration:
             assignPublicIp: DISABLED
             securityGroups:
-              - !Ref EcsSecurityGroupLambdaRunner
+              - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
               - !Ref Ec2SubnetPrivate1
               - !Ref Ec2SubnetPrivate2
@@ -1591,7 +1676,7 @@ Resources:
           awsvpcConfiguration:
             assignPublicIp: DISABLED
             securityGroups:
-              - !Ref EcsSecurityGroupLambdaRunner
+              - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
               - !Ref Ec2SubnetPrivate1
               - !Ref Ec2SubnetPrivate2
@@ -1619,7 +1704,7 @@ Resources:
           awsvpcConfiguration:
             assignPublicIp: DISABLED
             securityGroups:
-              - !Ref EcsSecurityGroupLambdaRunner
+              - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
               - !Ref Ec2SubnetPrivate1
               - !Ref Ec2SubnetPrivate2
@@ -1646,7 +1731,7 @@ Resources:
           awsvpcConfiguration:
             assignPublicIp: DISABLED
             securityGroups:
-              - !Ref EcsSecurityGroupLambdaRunner
+              - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
               - !Ref Ec2SubnetPrivate1
               - !Ref Ec2SubnetPrivate2
@@ -1684,7 +1769,7 @@ Resources:
           awsvpcConfiguration:
             assignPublicIp: DISABLED
             securityGroups:
-              - !Ref EcsSecurityGroupLambdaRunner
+              - !Ref Ec2SecurityGroupLambdaRunner
             subnets:
               - !Ref Ec2SubnetPrivate1
               - !Ref Ec2SubnetPrivate2
@@ -1722,7 +1807,7 @@ Resources:
     Properties:
       Scheme: internet-facing
       SecurityGroups:
-        - !Ref EcsSecurityGroupLoadBalancerPublic
+        - !Ref Ec2SecurityGroupLoadBalancerPublic
       Subnets:
         - !Ref Ec2SubnetPublic1
         - !Ref Ec2SubnetPublic2
@@ -1737,7 +1822,7 @@ Resources:
     Properties:
       Scheme: internal
       SecurityGroups:
-        - !Ref EcsSecurityGroupLoadBalancerPrivate
+        - !Ref Ec2SecurityGroupLoadBalancerPrivate
       Subnets:
         - !Ref Ec2SubnetPrivate1
         - !Ref Ec2SubnetPrivate2
@@ -1750,6 +1835,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
 
   TargetGroupApiServerPrivate:
+    Condition: IfRunApiServer
     DependsOn:
      - LoadBalancerPrivate
     Properties:
@@ -1775,6 +1861,7 @@ Resources:
 
 
   TargetGroupApiServerPublic:
+    Condition: IfRunApiServer
     DependsOn:
      - LoadBalancerPublic
     Properties:
@@ -1793,6 +1880,42 @@ Resources:
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
+      TargetType: ip
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+
+
+  TargetGroupJupyter:
+    Condition: IfRunJupyter
+    DependsOn:
+     - LoadBalancerPublic
+    Properties:
+      HealthCheckIntervalSeconds: 80
+      HealthCheckPath: '/'
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 50
+      HealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200-299
+      Port: 8888
+      Protocol: HTTP
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-target-group-jupyter"
+      TargetGroupAttributes:
+      -
+        Key: deregistration_delay.timeout_seconds
+        Value: '60'
+      -
+        Key: stickiness.enabled
+        Value: 'false'
+      -
+        Key: stickiness.type
+        Value: lb_cookie
+      -
+        Key: stickiness.lb_cookie.duration_seconds
+        Value: '86400'
       TargetType: ip
       UnhealthyThresholdCount: 5
       VpcId: !Ref Ec2Vpc
@@ -1889,6 +2012,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
 
   ListenerApiServerPrivate:
+    Condition: IfRunApiServer
     Properties:
       DefaultActions:
         - TargetGroupArn: !Ref TargetGroupApiServerPrivate
@@ -1900,12 +2024,25 @@ Resources:
 
 
   ListenerApiServerPublic:
+    Condition: IfRunApiServer
     Properties:
       DefaultActions:
         - TargetGroupArn: !Ref TargetGroupApiServerPublic
           Type: forward
       LoadBalancerArn: !Ref LoadBalancerPublic
       Port: 8250
+      Protocol: HTTP
+    Type: AWS::ElasticLoadBalancingV2::Listener
+
+
+  ListenerJupyter:
+    Condition: IfRunJupyter
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroupJupyter
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancerPublic
+      Port: 8888
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
 
@@ -1950,6 +2087,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html
 
   EcsTaskDefinitionApiServer:
+    Condition: IfRunApiServer
     DependsOn:
       - EfsMountTarget1
       - EfsMountTarget2
@@ -1981,7 +2119,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: service
           MountPoints:
@@ -2084,7 +2222,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: job
           MountPoints:
@@ -2142,7 +2280,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: job
           MountPoints:
@@ -2200,7 +2338,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: job
           MountPoints:
@@ -2278,7 +2416,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: job
           MountPoints:
@@ -2321,6 +2459,58 @@ Resources:
             FilesystemId:
               Ref: EfsFileSystem
             RootDirectory: /g2
+    Type: AWS::ECS::TaskDefinition
+
+
+  EcsTaskDefinitionJupyter:
+    DependsOn:
+      - EfsMountTarget1
+      - EfsMountTarget2
+    Properties:
+      ContainerDefinitions:
+        -
+          Command:
+            - 'start.sh'
+            - 'jupyter'
+            - 'notebook'
+            - "--NotebookApp.token=''"
+          Environment:
+            -
+              Name: SENZING_SQL_CONNECTION
+              Value: !Sub
+                - "postgresql://${DbUsername}:${DbPassword}@${RdsDbCluster.Endpoint.Address}:${RdsDbCluster.Endpoint.Port}:${DbName}/"
+                - DbUsername: !FindInMap [Constants, Database, Username]
+                  DbPassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DbName: !FindInMap [Constants, Database, Name]
+          Essential: true
+          Image: senzing/jupyter:1.2.0
+          LinuxParameters:
+            Capabilities: {}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogsLogGroupMain
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: service
+          Name: jupyter
+          PortMappings:
+            - ContainerPort: 8888
+              HostPort: 8888
+              Protocol: tcp
+          Privileged: false
+          PseudoTerminal: false
+          ReadonlyRootFilesystem: false
+      Cpu: '1024'
+      ExecutionRoleArn: !GetAtt IamRoleJupyter.Arn
+      Family: !Sub "${AWS::StackName}-task-definition-jupyter"
+      Memory: '8192'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ecs-task-definition-jupyter"
+      TaskRoleArn: !GetAtt IamRoleJupyter.Arn
     Type: AWS::ECS::TaskDefinition
 
 
@@ -2371,7 +2561,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: service
           MountPoints:
@@ -2454,7 +2644,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: service
           MountPoints:
@@ -2585,7 +2775,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: service
           MountPoints:
@@ -2694,7 +2884,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: job
           Name: producer1
@@ -2730,7 +2920,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: service
           Name: swagger
@@ -2776,7 +2966,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: service
           Name: webapp
@@ -2817,7 +3007,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${AWS::StackName}-log-group"
+              awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: service
           MountPoints:
@@ -2891,6 +3081,7 @@ Resources:
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
 
   EcsServiceApiServer:
+    Condition: IfRunApiServer
     DependsOn:
      - LambdaRunnerInitEfs
     Properties:
@@ -2911,7 +3102,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref EcsSecurityGroupInternal
+            - !Ref Ec2SecurityGroupInternal
           Subnets:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
@@ -2925,7 +3116,40 @@ Resources:
     Type: AWS::ECS::Service
 
 
+  EcsServiceJupyter:
+    Condition: IfRunJupyter
+    DependsOn:
+     - LambdaRunnerInitEfs
+    Properties:
+      Cluster: !Ref EcsCluster
+      DesiredCount: 1
+      EnableECSManagedTags: true
+      LaunchType: FARGATE
+      LoadBalancers:
+        -
+          ContainerPort: 8888
+          ContainerName: jupyter
+          TargetGroupArn: !Ref TargetGroupJupyter
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref Ec2SecurityGroupInternal
+          Subnets:
+            - !Ref Ec2SubnetPrivate1
+            - !Ref Ec2SubnetPrivate2
+      PlatformVersion: 1.4.0
+      PropagateTags: TASK_DEFINITION
+      ServiceName: jupyter
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ecs-service-jupyter"
+      TaskDefinition: !Ref EcsTaskDefinitionJupyter
+    Type: AWS::ECS::Service
+
+
   EcsServiceRedoer:
+    Condition: IfRunRedoer
     DependsOn:
      - LambdaRunnerInitSenzing
     Properties:
@@ -2937,7 +3161,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref EcsSecurityGroupInternal
+            - !Ref Ec2SecurityGroupInternal
           Subnets:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
@@ -2964,7 +3188,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref EcsSecurityGroupSshd
+            - !Ref Ec2SecurityGroupSshd
           Subnets:
             - !Ref Ec2SubnetPublic1
             - !Ref Ec2SubnetPublic2
@@ -2979,6 +3203,7 @@ Resources:
 
 
   EcsServiceStreamLoader:
+    Condition: IfRunStreamLoader
     DependsOn:
      - LambdaRunnerInitSenzing
     Properties:
@@ -2990,7 +3215,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref EcsSecurityGroupInternal
+            - !Ref Ec2SecurityGroupInternal
           Subnets:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
@@ -3022,7 +3247,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref EcsSecurityGroupInternal
+            - !Ref Ec2SecurityGroupInternal
           Subnets:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
@@ -3054,7 +3279,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref EcsSecurityGroupInternal
+            - !Ref Ec2SecurityGroupInternal
           Subnets:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
@@ -3086,7 +3311,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref EcsSecurityGroupInternal
+            - !Ref Ec2SecurityGroupInternal
           Subnets:
             - !Ref Ec2SubnetPrivate1
             - !Ref Ec2SubnetPrivate2
@@ -3108,7 +3333,7 @@ Resources:
       MaxCapacity: 100
       MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceStreamLoader.Name}"
-      RoleARN: !GetAtt IamRoleApiServer.Arn
+      RoleARN: !GetAtt IamRoleStreamLoader.Arn
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
       SuspendedState:
@@ -3144,6 +3369,7 @@ Outputs:
     Value: 'http://senzing.github.io/aws-cloudformation-ecs-poc-simple/senzing-demo-full-stack#outputs'
 
   ApiServerHeartbeatUrl:
+    Condition: IfRunApiServer
     Description: Url for Swagger
     Value: !Sub "http://${LoadBalancerPublic.DNSName}:8250/heartbeat"
 
@@ -3188,6 +3414,11 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-host"
     Value: !GetAtt LoadBalancerPublic.DNSName
+
+  JupyterUrl:
+    Condition: IfRunJupyter
+    Description: Url for Jupyter Noteboks
+    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8888"
 
   Queue:
     Description: URL of the input queue
