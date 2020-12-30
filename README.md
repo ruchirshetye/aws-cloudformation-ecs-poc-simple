@@ -7,7 +7,7 @@ The `aws-cloudformation-ecs-poc-simple` demonstrates a Senzing deployment using 
 Detailed instructions at
 [hub.senzing.com/aws-cloudformation-ecs-poc-simple](http://senzing.github.io/aws-cloudformation-ecs-poc-simple)
 
-## How to deploy
+## How to deploy without much thinking
 
 1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3-external-1.amazonaws.com/cf-templates-xoqvergspzx7-us-east-1/2020365v5b-cloudformation.yaml)
 1. In lower-right, click on "Next" button.
@@ -19,7 +19,7 @@ Detailed instructions at
     1. In lower-right, click "Next" button.
 1. In **Configure stack options**
     1. In lower-right, click "Next" button.
-1. In **Review {stack-name}**
+1. In **Review senzing-poc**
     1. Near the bottom, in **Capabilities**
         1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
     1. In lower-right, click "Create stack" button.
