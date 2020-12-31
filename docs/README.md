@@ -189,11 +189,6 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 ## Outputs
 
-### ADescriptionOfOutputs
-
-1. **Synopsis:**
-   A URL showing how to reach this page.
-
 ### ApiServerHeartbeatUrl
 
 1. **Synopsis:**
@@ -205,12 +200,20 @@ Technical information on AWS Cloudformation parameters can be seen at
    For more URIs, see
    [SwaggerUrl output value](#swaggerurl).
 
-### DatabaseHost
-
-FIXME: will need to be updated when clustering is enabled.
+### DatabaseHostCore
 
 1. **Synopsis:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+
+### DatabaseHostLibfeat
+
+1. **Synopsis:**
+   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home)
+
+### DatabaseHostRes
+
+1. **Synopsis:**
+   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home)
 
 ### DatabaseName
 
@@ -224,7 +227,21 @@ FIXME: will need to be updated when clustering is enabled.
 1. **Synopsis:**
    The randomly-generated administrative password for authenticating with the database.
 
-### DatabasePort
+### DatabasePortCore
+
+1. **Synopsis:**
+   The port used to access each of the databases.
+1. **Details:**
+   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+
+### DatabasePortLibfeat
+
+1. **Synopsis:**
+   The port used to access each of the databases.
+1. **Details:**
+   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
+
+### DatabasePortRes
 
 1. **Synopsis:**
    The port used to access each of the databases.
