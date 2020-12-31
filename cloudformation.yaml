@@ -6,16 +6,14 @@ AWSTemplateFormatVersion: 2010-09-09
 #     Nag: https://github.com/stelligent/cfn_nag
 
 # TODO: Create resource(s) that guarantee EFS is "available". https://console.aws.amazon.com/support/home#/case/?displayId=7705802111&language=en
-# TODO: Fix Help URLs.  When hub.senzing.com is available.
-# TODO: Add Senzing database cluster
+# TODO: When hub.senzing.com is available, fix Help URLs.
 # TODO: Cleanup "nag" errors and warnings
 # TODO: In Rules, fix detection of empty strings
-# TODO: Autoscale Entity Search Web App
-# TODO: User-supplied password for "senzing/sshd" (Needs support in GitHub project)
 # TODO: Jupyter inconsistent connection
 
 Description: >-
-  Senzing aws-cloudformation-ecs-poc-simple Version: 0.1.0
+  Senzing aws-cloudformation-ecs-poc-simple Version: 0.2.0
+  For more information see https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
 
 # -----------------------------------------------------------------------------
 # Metadata
@@ -121,7 +119,7 @@ Mappings:
       Name: poc-simple
     StreamProducer:
       InputUrl: https://public-read-access.s3.amazonaws.com/TestDataSets/test-dataset-100m.json.gz
-      RecordMax: 100000
+      RecordMax: 20000
       RecordMin: 0
 
   VpcCidrs:
@@ -505,7 +503,7 @@ Resources:
 
   IamPolicyEfs:
     Properties:
-      PolicyName: !Sub ${AWS::StackName}-iam-policy-lambda
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-lambda"
       PolicyDocument:
         Statement:
           -
@@ -522,7 +520,7 @@ Resources:
 
   IamPolicyEc2FlowLogs:
     Properties:
-      PolicyName: !Sub ${AWS::StackName}-iam-policy-logging-create-group
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-group"
       PolicyDocument:
         Statement:
           -
@@ -543,7 +541,7 @@ Resources:
 
   IamPolicyLoggingCreateStream:
     Properties:
-      PolicyName: !Sub ${AWS::StackName}-iam-policy-logging-create-stream
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-stream"
       PolicyDocument:
         Statement:
           -
@@ -575,7 +573,7 @@ Resources:
 
   IamPolicyPassRole:
     Properties:
-      PolicyName: !Sub ${AWS::StackName}-iam-policy-pass-role
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-pass-role"
       PolicyDocument:
         Statement:
           -
@@ -595,7 +593,7 @@ Resources:
 
   IamPolicyTaskRunner:
     Properties:
-      PolicyName: !Sub ${AWS::StackName}-iam-policy-task-runner
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
       PolicyDocument:
         Statement:
           -
@@ -621,7 +619,7 @@ Resources:
 
   IamPolicySqsConsumer:
     Properties:
-      PolicyName: !Sub ${AWS::StackName}-iam-policy-sqs-consumer
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-consumer"
       PolicyDocument:
         Statement:
           -
@@ -640,7 +638,7 @@ Resources:
 
   IamPolicySqsProducer:
     Properties:
-      PolicyName: !Sub ${AWS::StackName}-iam-policy-sqs-producer
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-producer"
       PolicyDocument:
         Statement:
           -
@@ -686,10 +684,24 @@ Resources:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-string-to-lower"
     Type: AWS::Logs::LogGroup
 
-  LogsLogGroupDbCluster:
+  LogsLogGroupDbClusterCore:
     Properties:
       LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-cluster/postgresql"
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-core/postgresql"
+        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
+    Type: AWS::Logs::LogGroup
+
+  LogsLogGroupDbClusterLibfeat:
+    Properties:
+      LogGroupName: !Sub
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-libfeat/postgresql"
+        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
+    Type: AWS::Logs::LogGroup
+
+  LogsLogGroupDbClusterRes:
+    Properties:
+      LogGroupName: !Sub
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-res/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
@@ -1229,16 +1241,16 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbcluster.html
 
-  RdsDbCluster:
+  RdsDbClusterCore:
     DependsOn:
-     - LogsLogGroupDbCluster
+     - LogsLogGroupDbClusterCore
      - RdsDbSubnetGroup
     Properties:
       AvailabilityZones:
         - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
         - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
       DatabaseName: G2
-      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-cluster"
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-core"
       DBClusterParameterGroupName:
         Ref: RdsDbClusterParameterGroup
       # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
@@ -1247,10 +1259,9 @@ Resources:
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
       DeletionProtection: false
       EnableHttpEndpoint: true
-      EnableIAMDatabaseAuthentication: false
       Engine: aurora-postgresql
       EngineMode: serverless
-      EngineVersion: '10.7'
+      EngineVersion: '10.12'
       MasterUsername: !FindInMap [Constants, Database, Username]
       MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
       ScalingConfiguration:
@@ -1265,7 +1276,89 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-rds-db-cluster"
+          Value: !Sub "${AWS::StackName}-rds-db-cluster-core"
+      VpcSecurityGroupIds:
+        - !Ref Ec2SecurityGroupInternal
+    Type: AWS::RDS::DBCluster
+
+
+  RdsDbClusterLibfeat:
+    DependsOn:
+     - LogsLogGroupDbClusterLibfeat
+     - RdsDbSubnetGroup
+    Properties:
+      AvailabilityZones:
+        - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
+        - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
+      DatabaseName: G2
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-libfeat"
+      DBClusterParameterGroupName:
+        Ref: RdsDbClusterParameterGroup
+      # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
+      DBSubnetGroupName: !Sub
+        - "${StackNameAsLower}-db-subnet"
+        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
+      DeletionProtection: false
+      EnableHttpEndpoint: true
+      Engine: aurora-postgresql
+      EngineMode: serverless
+      EngineVersion: '10.12'
+      MasterUsername: !FindInMap [Constants, Database, Username]
+      MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
+      ScalingConfiguration:
+        AutoPause: true
+        MaxCapacity: 192
+        MinCapacity: 2
+        SecondsUntilAutoPause: 3600
+#       FIXME:  Uncomment once 'TimeoutAction' is supported.
+#       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
+#       https://console.aws.amazon.com/support/home#/case/?displayId=7705681311&language=en
+#       TimeoutAction: ForceApplyCapacityChange
+      StorageEncrypted: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-rds-db-cluster-libfeat"
+      VpcSecurityGroupIds:
+        - !Ref Ec2SecurityGroupInternal
+    Type: AWS::RDS::DBCluster
+
+
+  RdsDbClusterRes:
+    DependsOn:
+     - LogsLogGroupDbClusterRes
+     - RdsDbSubnetGroup
+    Properties:
+      AvailabilityZones:
+        - !GetAtt Ec2SubnetPrivate1.AvailabilityZone
+        - !GetAtt Ec2SubnetPrivate2.AvailabilityZone
+      DatabaseName: G2
+      DBClusterIdentifier: !Sub "${AWS::StackName}-aurora-senzing-cluster-res"
+      DBClusterParameterGroupName:
+        Ref: RdsDbClusterParameterGroup
+      # FIXME: Tricky code.  See https://console.aws.amazon.com/support/home#/case/?displayId=7725760511
+      DBSubnetGroupName: !Sub
+        - "${StackNameAsLower}-db-subnet"
+        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
+      DeletionProtection: false
+      EnableHttpEndpoint: true
+      Engine: aurora-postgresql
+      EngineMode: serverless
+      EngineVersion: '10.12'
+      MasterUsername: !FindInMap [Constants, Database, Username]
+      MasterUserPassword: !GetAtt LambdaRunnerDbPassword.RandomString
+      ScalingConfiguration:
+        AutoPause: true
+        MaxCapacity: 192
+        MinCapacity: 2
+        SecondsUntilAutoPause: 3600
+#       FIXME:  Uncomment once 'TimeoutAction' is supported.
+#       https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298
+#       https://console.aws.amazon.com/support/home#/case/?displayId=7705681311&language=en
+#       TimeoutAction: ForceApplyCapacityChange
+      StorageEncrypted: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-rds-db-cluster-res"
       VpcSecurityGroupIds:
         - !Ref Ec2SecurityGroupInternal
     Type: AWS::RDS::DBCluster
@@ -1310,10 +1403,10 @@ Resources:
   EcsCluster:
     Properties:
       ClusterName: !Sub "${AWS::StackName}-cluster"
-      ClusterSettings:
-        -
-          Name: containerInsights
-          Value: disabled
+#     ClusterSettings:
+#       -
+#         Name: containerInsights
+#         Value: disabled
     Type: AWS::ECS::Cluster
 
 # -- LambdaFunction -----------------------------------------------------------
@@ -1690,10 +1783,10 @@ Resources:
     Type: Custom::LambdaRunnerInstallSenzing
 
 
-  LambdaRunnerInitPostgres:
+  LambdaRunnerInitPostgresCore:
     DependsOn:
      - LambdaRunnerInstallSenzing
-     - RdsDbCluster
+     - RdsDbClusterCore
     Properties:
       ClusterId: !Ref EcsCluster
       RunTaskParameters:
@@ -1712,15 +1805,71 @@ Resources:
         platformVersion: 1.4.0
         tags:
           - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-init-postgres"
-        taskDefinition: !Ref EcsTaskDefinitionInitPostgres
+            value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-core"
+        taskDefinition: !Ref EcsTaskDefinitionInitPostgresCore
       ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
-    Type: Custom::LambdaRunnerInitPostgres
+    Type: Custom::LambdaRunnerInitPostgresCore
 
+
+  LambdaRunnerInitPostgresLibfeat:
+    DependsOn:
+     - LambdaRunnerInstallSenzing
+     - RdsDbClusterLibfeat
+    Properties:
+      ClusterId: !Ref EcsCluster
+      RunTaskParameters:
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
+        cluster: !Ref EcsCluster
+        count: 1
+        launchType: FARGATE
+        networkConfiguration:
+          awsvpcConfiguration:
+            assignPublicIp: DISABLED
+            securityGroups:
+              - !Ref Ec2SecurityGroupLambdaRunner
+            subnets:
+              - !Ref Ec2SubnetPrivate1
+              - !Ref Ec2SubnetPrivate2
+        platformVersion: 1.4.0
+        tags:
+          - key: Name
+            value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-libfeat"
+        taskDefinition: !Ref EcsTaskDefinitionInitPostgresLibfeat
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
+    Type: Custom::LambdaRunnerInitPostgresLibfeat
+
+  LambdaRunnerInitPostgresRes:
+    DependsOn:
+     - LambdaRunnerInstallSenzing
+     - RdsDbClusterRes
+    Properties:
+      ClusterId: !Ref EcsCluster
+      RunTaskParameters:
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
+        cluster: !Ref EcsCluster
+        count: 1
+        launchType: FARGATE
+        networkConfiguration:
+          awsvpcConfiguration:
+            assignPublicIp: DISABLED
+            securityGroups:
+              - !Ref Ec2SecurityGroupLambdaRunner
+            subnets:
+              - !Ref Ec2SubnetPrivate1
+              - !Ref Ec2SubnetPrivate2
+        platformVersion: 1.4.0
+        tags:
+          - key: Name
+            value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-res"
+        taskDefinition: !Ref EcsTaskDefinitionInitPostgresRes
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
+    Type: Custom::LambdaRunnerInitPostgresRes
 
   LambdaRunnerInitSenzing:
     DependsOn:
-     - LambdaRunnerInitPostgres
+     - LambdaRunnerInitPostgresCore
+     - LambdaRunnerInitPostgresLibfeat
+     - LambdaRunnerInitPostgresRes
     Properties:
       ClusterId: !Ref EcsCluster
       RunTaskParameters:
@@ -2110,18 +2259,8 @@ Resources:
             - -allowedOrigins
             - '*'
             - -enableAdmin
-          Environment:
-            -
-              Name: SENZING_DATABASE_URL
-              Value: !Sub
-                - "postgresql://${DbUsername}:${DbPassword}@${RdsDbCluster.Endpoint.Address}:${RdsDbCluster.Endpoint.Port}/${DbName}"
-                - DbUsername: !FindInMap [Constants, Database, Username]
-                  DbPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DbName: !FindInMap [Constants, Database, Name]
           Essential: true
-          Image: senzing/senzing-api-server:2.3.0
-          LinuxParameters:
-            Capabilities: {}
+          Image: senzing/senzing-api-server:2.3.1
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2151,7 +2290,6 @@ Resources:
               HostPort: 8250
               Protocol: tcp
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleApiServer.Arn
@@ -2224,8 +2362,6 @@ Resources:
             - '/efs/var/shared'
           Essential: true
           Image: busybox
-          LinuxParameters:
-            Capabilities: {}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2239,7 +2375,6 @@ Resources:
               ReadOnly: false
           Name: efsinitcontainer
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
       Cpu: '512'
       ExecutionRoleArn: !GetAtt IamRoleInitEfs.Arn
@@ -2262,7 +2397,7 @@ Resources:
     Type: AWS::ECS::TaskDefinition
 
 
-  EcsTaskDefinitionInitPostgres:
+  EcsTaskDefinitionInitPostgresCore:
     Properties:
       ContainerDefinitions:
         -
@@ -2270,17 +2405,15 @@ Resources:
             -
               Name: SENZING_DATABASE_URL
               Value: !Sub
-                - "postgresql://${DbUsername}:${DbPassword}@${RdsDbCluster.Endpoint.Address}:${RdsDbCluster.Endpoint.Port}/${DbName}"
-                - DbUsername: !FindInMap [Constants, Database, Username]
-                  DbPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DbName: !FindInMap [Constants, Database, Name]
+                - "postgresql://${DatabaseUsername}:${DatabasePassword}@${RdsDbClusterCore.Endpoint.Address}:${RdsDbClusterCore.Endpoint.Port}/${DatabaseName}"
+                - DatabaseUsername: !FindInMap [Constants, Database, Username]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabaseName: !FindInMap [Constants, Database, Name]
             -
               Name: SENZING_SQL_FILE
               Value: /opt/senzing/g2/resources/schema/g2core-schema-postgresql-create.sql
           Essential: true
           Image: senzing/postgresql-client:1.0.0
-          LinuxParameters:
-            Capabilities: {}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2294,18 +2427,121 @@ Resources:
               ReadOnly: true
           Name: postgresinit
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
       Cpu: '512'
       ExecutionRoleArn: !GetAtt IamRoleInitPostgres.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-init-postgres"
+      Family: !Sub "${AWS::StackName}-task-definition-init-postgres-core"
       Memory: '1024'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-init-postgres"
+          Value: !Sub "${AWS::StackName}-ecs-task-definition-init-postgres-core"
+      Volumes:
+        -
+          Name: senzing-g2-dir
+          EFSVolumeConfiguration:
+            AuthorizationConfig: {}
+            FilesystemId:
+              Ref: EfsFileSystem
+            RootDirectory: /g2
+    Type: AWS::ECS::TaskDefinition
+
+
+  EcsTaskDefinitionInitPostgresLibfeat:
+    Properties:
+      ContainerDefinitions:
+        -
+          Environment:
+            -
+              Name: SENZING_DATABASE_URL
+              Value: !Sub
+                - "postgresql://${DatabaseUsername}:${DatabasePassword}@${RdsDbClusterLibfeat.Endpoint.Address}:${RdsDbClusterLibfeat.Endpoint.Port}/${DatabaseName}"
+                - DatabaseUsername: !FindInMap [Constants, Database, Username]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabaseName: !FindInMap [Constants, Database, Name]
+            -
+              Name: SENZING_SQL_FILE
+              Value: /opt/senzing/g2/resources/schema/g2core-schema-postgresql-create.sql
+          Essential: true
+          Image: senzing/postgresql-client:1.0.0
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogsLogGroupMain
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: job
+          MountPoints:
+            -
+              SourceVolume: senzing-g2-dir
+              ContainerPath: /opt/senzing/g2
+              ReadOnly: true
+          Name: postgresinit
+          Privileged: false
+          ReadonlyRootFilesystem: false
+      Cpu: '512'
+      ExecutionRoleArn: !GetAtt IamRoleInitPostgres.Arn
+      Family: !Sub "${AWS::StackName}-task-definition-init-postgres-libfeat"
+      Memory: '1024'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ecs-task-definition-init-postgres-libfeat"
+      Volumes:
+        -
+          Name: senzing-g2-dir
+          EFSVolumeConfiguration:
+            AuthorizationConfig: {}
+            FilesystemId:
+              Ref: EfsFileSystem
+            RootDirectory: /g2
+    Type: AWS::ECS::TaskDefinition
+
+
+  EcsTaskDefinitionInitPostgresRes:
+    Properties:
+      ContainerDefinitions:
+        -
+          Environment:
+            -
+              Name: SENZING_DATABASE_URL
+              Value: !Sub
+                - "postgresql://${DatabaseUsername}:${DatabasePassword}@${RdsDbClusterRes.Endpoint.Address}:${RdsDbClusterRes.Endpoint.Port}/${DatabaseName}"
+                - DatabaseUsername: !FindInMap [Constants, Database, Username]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabaseName: !FindInMap [Constants, Database, Name]
+            -
+              Name: SENZING_SQL_FILE
+              Value: /opt/senzing/g2/resources/schema/g2core-schema-postgresql-create.sql
+          Essential: true
+          Image: senzing/postgresql-client:1.0.0
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogsLogGroupMain
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: job
+          MountPoints:
+            -
+              SourceVolume: senzing-g2-dir
+              ContainerPath: /opt/senzing/g2
+              ReadOnly: true
+          Name: postgresinit
+          Privileged: false
+          ReadonlyRootFilesystem: false
+      Cpu: '512'
+      ExecutionRoleArn: !GetAtt IamRoleInitPostgres.Arn
+      Family: !Sub "${AWS::StackName}-task-definition-init-postgres-res"
+      Memory: '1024'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ecs-task-definition-init-postgres-res"
       Volumes:
         -
           Name: senzing-g2-dir
@@ -2323,19 +2559,23 @@ Resources:
         -
           Environment:
             -
-              Name: SENZING_DATABASE_URL
+              Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !Sub
-                - "postgresql://${DbUsername}:${DbPassword}@${RdsDbCluster.Endpoint.Address}:${RdsDbCluster.Endpoint.Port}/${DbName}"
-                - DbUsername: !FindInMap [Constants, Database, Username]
-                  DbPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DbName: !FindInMap [Constants, Database, Name]
+                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
+                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
+                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
+                  DatabaseName: !FindInMap [Constants, Database, Name]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
+                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
+                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
+                  DatabaseUsername: !FindInMap [Constants, Database, Username]
             -
               Name: SENZING_LICENSE_BASE64_ENCODED
               Value: !Sub "${SenzingLicenseAsBase64}"
           Essential: true
-          Image: senzing/init-container:1.6.3
-          LinuxParameters:
-            Capabilities: {}
+          Image: senzing/init-container:1.6.4
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2357,7 +2597,6 @@ Resources:
               ReadOnly: false
           Name: initcontainer
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
           User: '0'
       Cpu: '512'
@@ -2409,8 +2648,6 @@ Resources:
               Value: !Ref AcceptEula
           Essential: true
           Image: senzing/yum:1.1.3
-          LinuxParameters:
-            Capabilities: {}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2429,7 +2666,6 @@ Resources:
 
           Name: yum
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
           User: '0'
       Cpu: '512'
@@ -2471,16 +2707,20 @@ Resources:
             - "--NotebookApp.token=''"
           Environment:
             -
-              Name: SENZING_SQL_CONNECTION
+              Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !Sub
-                - "postgresql://${DbUsername}:${DbPassword}@${RdsDbCluster.Endpoint.Address}:${RdsDbCluster.Endpoint.Port}:${DbName}/"
-                - DbUsername: !FindInMap [Constants, Database, Username]
-                  DbPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DbName: !FindInMap [Constants, Database, Name]
+                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
+                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
+                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
+                  DatabaseName: !FindInMap [Constants, Database, Name]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
+                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
+                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
+                  DatabaseUsername: !FindInMap [Constants, Database, Username]
           Essential: true
           Image: senzing/jupyter:1.2.0
-          LinuxParameters:
-            Capabilities: {}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2510,7 +2750,6 @@ Resources:
               HostPort: 8888
               Protocol: tcp
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleJupyter.Arn
@@ -2561,25 +2800,24 @@ Resources:
         -
           Environment:
             -
-              Name: SENZING_DATABASE_URL
+              Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !Sub
-                - "postgresql://${DbUsername}:${DbPassword}@${RdsDbCluster.Endpoint.Address}:${RdsDbCluster.Endpoint.Port}/${DbName}"
-                - DbUsername: !FindInMap [Constants, Database, Username]
-                  DbPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DbName: !FindInMap [Constants, Database, Name]
+                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
+                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
+                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
+                  DatabaseName: !FindInMap [Constants, Database, Name]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
+                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
+                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
+                  DatabaseUsername: !FindInMap [Constants, Database, Username]
             -
               Name: SENZING_EXIT_ON_THREAD_TERMINATION
               Value: 'true'
             -
               Name: SENZING_GOVERNOR_CHECK_TIME_INTERVAL_IN_SECONDS
               Value: '600'
-            -
-              Name: SENZING_GOVERNOR_DATABASE_URLS
-              Value: !Sub
-                - "postgresql://${DbUsername}:${DbPassword}@${RdsDbCluster.Endpoint.Address}:${RdsDbCluster.Endpoint.Port}/${DbName}"
-                - DbUsername: !FindInMap [Constants, Database, Username]
-                  DbPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DbName: !FindInMap [Constants, Database, Name]
             -
               Name: SENZING_LOG_LEVEL
               Value: info
@@ -2594,8 +2832,6 @@ Resources:
               Value: redo
           Essential: true
           Image: senzing/redoer:1.3.4
-          LinuxParameters:
-            Capabilities: {}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2621,7 +2857,6 @@ Resources:
               ReadOnly: false
           Name: redoer
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
       Cpu: '4096'
       ExecutionRoleArn: !GetAtt IamRoleRedoer.Arn
@@ -2675,7 +2910,7 @@ Resources:
               Name: ROOT_PASSWORD
               Value: !GetAtt LambdaRunnerSshPassword.RandomString
           Essential: true
-          Image: senzing/sshd:1.0.2
+          Image: senzing/sshd:1.0.3
           LinuxParameters:
             Capabilities:
               Add:
@@ -2705,7 +2940,6 @@ Resources:
               ReadOnly: false
           Name: sshd
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleSshd.Arn
@@ -2755,12 +2989,18 @@ Resources:
         -
           Environment:
             -
-              Name: SENZING_DATABASE_URL
+              Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !Sub
-                - "postgresql://${DbUsername}:${DbPassword}@${RdsDbCluster.Endpoint.Address}:${RdsDbCluster.Endpoint.Port}/${DbName}"
-                - DbUsername: !FindInMap [Constants, Database, Username]
-                  DbPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DbName: !FindInMap [Constants, Database, Name]
+                - '{"PIPELINE": {"CONFIGPATH": "/etc/opt/senzing","RESOURCEPATH": "/opt/senzing/g2/resources","SUPPORTPATH": "/opt/senzing/data"},"SQL": {"BACKEND": "HYBRID","CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"},"C1": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"},"C2": {"CLUSTER_SIZE": "1","DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"},"HYBRID": {"RES_FEAT": "C1","RES_FEAT_EKEY": "C1","RES_FEAT_LKEY": "C1","RES_FEAT_STAT": "C1","LIB_FEAT": "C2","LIB_FEAT_HKEY": "C2"}}'
+                - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
+                  DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
+                  DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
+                  DatabaseName: !FindInMap [Constants, Database, Name]
+                  DatabasePassword: !GetAtt LambdaRunnerDbPassword.RandomString
+                  DatabasePortLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
+                  DatabasePortCore: !GetAtt RdsDbClusterCore.Endpoint.Port
+                  DatabasePortRes: !GetAtt RdsDbClusterRes.Endpoint.Port
+                  DatabaseUsername: !FindInMap [Constants, Database, Username]
             -
               Name: SENZING_DATA_SOURCE
               Value: TEST
@@ -2776,13 +3016,6 @@ Resources:
             -
               Name: SENZING_GOVERNOR_CHECK_TIME_INTERVAL_IN_SECONDS
               Value: '600'
-            -
-              Name: SENZING_GOVERNOR_DATABASE_URLS
-              Value: !Sub
-                - "postgresql://${DbUsername}:${DbPassword}@${RdsDbCluster.Endpoint.Address}:${RdsDbCluster.Endpoint.Port}/${DbName}"
-                - DbUsername: !FindInMap [Constants, Database, Username]
-                  DbPassword: !GetAtt LambdaRunnerDbPassword.RandomString
-                  DbName: !FindInMap [Constants, Database, Name]
             -
               Name: SENZING_LOG_LEVEL
               Value: info
@@ -2806,8 +3039,6 @@ Resources:
               Value: '8'
           Essential: true
           Image: senzing/stream-loader:1.6.5
-          LinuxParameters:
-            Capabilities: {}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2833,7 +3064,6 @@ Resources:
               ReadOnly: false
           Name: stream-loader
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleStreamLoader.Arn
@@ -2912,8 +3142,6 @@ Resources:
               Value: '30'
           Essential: true
           Image: senzing/stream-producer:1.2.3
-          LinuxParameters:
-            Capabilities: {}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2922,7 +3150,6 @@ Resources:
               awslogs-stream-prefix: job
           Name: producer1
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleStreamProducer.Arn
@@ -2948,8 +3175,6 @@ Resources:
               Value: "https://raw.githubusercontent.com/Senzing/senzing-rest-api-specification/master/senzing-rest-api.yaml"
           Essential: true
           Image: swaggerapi/swagger-ui:latest
-          LinuxParameters:
-            Capabilities: {}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -2962,7 +3187,6 @@ Resources:
               HostPort: 8080
               Protocol: tcp
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleSwagger.Arn
@@ -2991,8 +3215,6 @@ Resources:
               Value: '8251'
           Essential: true
           Image: senzing/entity-search-web-app:2.1.1
-          LinuxParameters:
-            Capabilities: {}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -3005,7 +3227,6 @@ Resources:
               HostPort: 8251
               Protocol: tcp
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleWebApp.Arn
@@ -3060,7 +3281,6 @@ Resources:
               HostPort: 5000
               Protocol: tcp
           Privileged: false
-          PseudoTerminal: false
           ReadonlyRootFilesystem: false
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleXterm.Arn
@@ -3355,9 +3575,24 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-applicationautoscaling-scalabletarget.html
 
-  ApplicationAutoScalingScalableTarget:
+  ApplicationAutoScalingScalableTargetApiServer:
     Properties:
-      MaxCapacity: 100
+      MaxCapacity: 200
+      MinCapacity: 1
+      ResourceId: !Sub "service/${EcsCluster}/${EcsServiceApiServer.Name}"
+      RoleARN: !GetAtt IamRoleApiServer.Arn
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      SuspendedState:
+        DynamicScalingInSuspended: false
+        DynamicScalingOutSuspended: false
+        ScheduledScalingSuspended: false
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+
+
+  ApplicationAutoScalingScalableTargetStreamLoader:
+    Properties:
+      MaxCapacity: 200
       MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceStreamLoader.Name}"
       RoleARN: !GetAtt IamRoleStreamLoader.Arn
@@ -3369,13 +3604,56 @@ Resources:
         ScheduledScalingSuspended: false
     Type: AWS::ApplicationAutoScaling::ScalableTarget
 
+
+  ApplicationAutoScalingScalableTargetWebApp:
+    Properties:
+      MaxCapacity: 200
+      MinCapacity: 1
+      ResourceId: !Sub "service/${EcsCluster}/${EcsServiceWebApp.Name}"
+      RoleARN: !GetAtt IamRoleWebApp.Arn
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      SuspendedState:
+        DynamicScalingInSuspended: false
+        DynamicScalingOutSuspended: false
+        ScheduledScalingSuspended: false
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-applicationautoscaling-scalingpolicy.html
 
-  ApplicationAutoScalingScalingPolicy:
+  ApplicationAutoScalingScalingPolicyApiServer:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-scaling-policy-api-server"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ApplicationAutoScalingScalableTargetApiServer
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 1200
+        ScaleOutCooldown: 300
+        TargetValue: 30
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+
+
+  ApplicationAutoScalingScalingPolicyStreamLoader:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-scaling-policy-stream-loader"
       PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref ApplicationAutoScalingScalableTarget
+      ScalingTargetId: !Ref ApplicationAutoScalingScalableTargetStreamLoader
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 1200
+        ScaleOutCooldown: 300
+        TargetValue: 30
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+
+
+  ApplicationAutoScalingScalingPolicyWebApp:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-scaling-policy-web-app"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ApplicationAutoScalingScalableTargetWebApp
       TargetTrackingScalingPolicyConfiguration:
         PredefinedMetricSpecification:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
@@ -3391,103 +3669,123 @@ Resources:
 
 Outputs:
 
-  ADescriptionOfOutputs:
-    Description: Help for output values.
-    Value: 'http://senzing.github.io/aws-cloudformation-ecs-poc-simple/senzing-demo-full-stack#outputs'
-
   ApiServerHeartbeatUrl:
     Condition: IfRunApiServer
-    Description: Url for Swagger.
+    Description: 'Url for Swagger. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#apiserverheartbeaturl'
     Value: !Sub "http://${LoadBalancerPublic.DNSName}:8250/heartbeat"
 
-  DatabaseHost:
-    Description: The connection endpoint for the DB cluster.
+  DatabaseHostCore:
+    Description: 'The connection endpoint for the DB cluster. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#databasehostcore'
     Export:
-      Name: !Sub "${AWS::StackName}-database-host"
-    Value: !GetAtt RdsDbCluster.Endpoint.Address
+      Name: !Sub "${AWS::StackName}-database-host-core"
+    Value: !GetAtt RdsDbClusterCore.Endpoint.Address
+
+  DatabaseHostLibfeat:
+    Description: 'The connection endpoint for the DB cluster. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#databasehostlibfeat'
+    Export:
+      Name: !Sub "${AWS::StackName}-database-host-libfeat"
+    Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
+
+  DatabaseHostRes:
+    Description: 'The connection endpoint for the DB cluster. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#databasehostres'
+    Export:
+      Name: !Sub "${AWS::StackName}-database-host-res"
+    Value: !GetAtt RdsDbClusterRes.Endpoint.Address
 
   DatabaseName:
-    Description: The name of the database.
+    Description: 'The name of the database. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#databasename'
     Export:
       Name: !Sub "${AWS::StackName}-database-name"
     Value: !FindInMap [Constants, Database, Name]
 
   DatabasePassword:
-    Description: The randomly generated password for the database.
+    Description: 'The randomly generated password for the database. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#databasepassword'
     Export:
       Name: !Sub "${AWS::StackName}-database-password"
     Value: !GetAtt LambdaRunnerDbPassword.RandomString
 
-  DatabasePort:
-    Description: The port number that will accept connections on this DB cluster.
+  DatabasePortCore:
+    Description: 'The port number that will accept connections on this DB cluster. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#databaseportcore'
     Export:
-      Name: !Sub "${AWS::StackName}-database-port"
-    Value: !GetAtt RdsDbCluster.Endpoint.Port
+      Name: !Sub "${AWS::StackName}-database-port-core"
+    Value: !GetAtt RdsDbClusterCore.Endpoint.Port
+
+  DatabasePortLibfeat:
+    Description: 'The port number that will accept connections on this DB cluster. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#databaseportlibfeat'
+    Export:
+      Name: !Sub "${AWS::StackName}-database-port-libfeat"
+    Value: !GetAtt RdsDbClusterLibfeat.Endpoint.Port
+
+  DatabasePortRes:
+    Description: 'The port number that will accept connections on this DB cluster. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#databaseportres'
+    Export:
+      Name: !Sub "${AWS::StackName}-database-port-res"
+    Value: !GetAtt RdsDbClusterRes.Endpoint.Port
 
   DatabaseUsername:
-    Description: The administrative user name.
+    Description: 'The administrative user name. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#databaseusername'
     Export:
       Name: !Sub "${AWS::StackName}-database-username"
     Value: !FindInMap [Constants, Database, Username]
 
   Ec2Vpc:
-    Description: The ID of the VPC.
+    Description: 'The ID of the VPC. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#ec2vpc'
     Export:
       Name: !Sub "${AWS::StackName}-ec2-VpcId"
     Value: !Ref Ec2Vpc
 
   Host:
-    Description: Host name of public services.
+    Description: 'Host name of public services. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#host'
     Export:
       Name: !Sub "${AWS::StackName}-host"
     Value: !GetAtt LoadBalancerPublic.DNSName
 
   JupyterUrl:
     Condition: IfRunJupyter
-    Description: Url for Jupyter Noteboks.
+    Description: 'Url for Jupyter Notebooks. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#jupyterurl'
     Value: !Sub "http://${LoadBalancerPublic.DNSName}:8888"
 
   Queue:
-    Description: URL of the input queue.
+    Description: 'URL of the input queue. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#queue'
     Export:
       Name: !Sub "${AWS::StackName}-queue"
     Value: !Ref SqsQueue
 
   QueueDeadLetter:
-    Description: URL of the dead-letter queue.
+    Description: 'URL of the dead-letter queue. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#queuedeadletter'
     Export:
       Name: !Sub "${AWS::StackName}-queue-deadletter"
     Value: !Ref SqsQueueDeadLetter
 
   SshPassword:
-    Description: The randomly generated password for SSH access.
+    Description: 'The randomly generated password for SSH access. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#sshpassword'
     Export:
       Name: !Sub "${AWS::StackName}-ssh-password"
     Value: !GetAtt LambdaRunnerSshPassword.RandomString
 
-  SwaggerUrl:
-    Condition: IfRunSwagger
-    Description: Url for Swagger.
-    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8080"
-
   SubnetPublic1:
-    Description: The ID of public subnet 1.
+    Description: 'The ID of public subnet 1. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#subnetpublic1'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-1"
     Value: !Ref Ec2SubnetPublic1
 
   SubnetPublic2:
-    Description: The ID of public subnet 2.
+    Description: 'The ID of public subnet 2. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#subnetpublic2'
     Export:
       Name: !Sub "${AWS::StackName}-subnet-public-2"
     Value: !Ref Ec2SubnetPublic2
 
+  SwaggerUrl:
+    Condition: IfRunSwagger
+    Description: 'Url for Swagger. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#swaggerurl'
+    Value: !Sub "http://${LoadBalancerPublic.DNSName}:8080"
+
   WebAppUrl:
     Condition: IfRunWebApp
-    Description: Url for Senzing Web App.
+    Description: 'Url for Senzing Web App. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#webappurl'
     Value: !Sub "http://${LoadBalancerPublic.DNSName}:8251"
 
   XtermUrl:
     Condition: IfRunXterm
-    Description: Url for Senzing X-Term.
+    Description: 'Url for Senzing X-Term. Help: http://senzing.github.io/aws-cloudformation-ecs-poc-simple/#xtermurl'
     Value: !Sub "http://${LoadBalancerPublic.DNSName}:5000"
