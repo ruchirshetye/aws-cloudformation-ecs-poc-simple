@@ -112,6 +112,9 @@ describing where we can improve.   Now on with the show...
 
 ### Review AWS Cloudformation
 
+The AWS resources created by the `cloudformation.yaml` template
+can be see in the [AWS Management Console](https://console.aws.amazon.com).
+
 1. CloudFormation
     1. [Stacks](https://console.aws.amazon.com/cloudformation/home?#/stacks)
 1. CloudWatch

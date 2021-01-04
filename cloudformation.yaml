@@ -3148,12 +3148,12 @@ Resources:
               awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: job
-          Name: producer1
+          Name: producer
           Privileged: false
           ReadonlyRootFilesystem: false
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleStreamProducer.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-stream-producer-1"
+      Family: !Sub "${AWS::StackName}-task-definition-stream-producer"
       Memory: '8192'
       NetworkMode: awsvpc
       RequiresCompatibilities:
