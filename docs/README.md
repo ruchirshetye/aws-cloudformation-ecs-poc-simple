@@ -117,7 +117,9 @@ describing where we can improve.   Now on with the show...
 1. CloudWatch
     1. [Log groups](https://console.aws.amazon.com/cloudwatch/home?#logsV2:log-groups)
 1. Elastic Compute Cloud (EC2)
+    1. [Load Balancers](https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers:)
     1. [Network interfaces](https://console.aws.amazon.com/ec2/v2/home?#NIC)
+    1. [Target groups](https://console.aws.amazon.com/ec2/v2/home?#TargetGroups:)
 1. Elastic Container Service (ECS)
     1. [Clusters](https://console.aws.amazon.com/ecs/home?#/clusters)
     1. [Task Definitions](https://console.aws.amazon.com/ecs/home?#/taskDefinitions)
