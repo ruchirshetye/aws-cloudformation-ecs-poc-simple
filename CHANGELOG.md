@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2021-01-04
+
+### Fixed in 0.2.1
+
+- Modified DependsOn values
+- Disabled Jupyter by default.  Keeps crashing.
+- Added missing Tags
+
 ## [0.2.0] - 2020-12-31
 
 ### Added to 0.2.0

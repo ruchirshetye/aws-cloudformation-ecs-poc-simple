@@ -48,8 +48,8 @@ This docker formation brings up the following docker containers:
 1. *[senzing/stream-producer](https://github.com/Senzing/stream-producer)*
 1. *[senzing/xterm](https://github.com/Senzing/docker-xterm)*
 
-Help for
-[aws-cloudformation-ecs-poc-simple](https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/aws-cloudformation-ecs-poc-simple).
+GitHub repository for
+[aws-cloudformation-ecs-poc-simple](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple).
 
 ### Contents
 
@@ -69,7 +69,7 @@ For the most part, instructions are copy and paste.
 Whenever thinking is needed, it's marked with a "thinking" icon :thinking:.
 Whenever customization is needed, it's marked with a "pencil" icon :pencil2:.
 If the instructions are not clear, please let us know by opening a new
-[Documentation issue](https://github.com/Senzing/aws-cloudformation-ecs/issues/new?template=documentation_request.md)
+[Documentation issue](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple/issues/new?template=documentation_request.md)
 describing where we can improve.   Now on with the show...
 
 ### Legend
@@ -91,7 +91,7 @@ describing where we can improve.   Now on with the show...
 
 ### Launch AWS Cloudformation
 
-1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3-external-1.amazonaws.com/cf-templates-xoqvergspzx7-us-east-1/2020366HsM-cloudformation.yaml)
+1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3-external-1.amazonaws.com/cf-templates-xoqvergspzx7-us-east-1/2021004xWV-cloudformation.yaml)
 1. In lower-right, click on "Next" button.
 1. In **Specify stack details**
     1. In **Stack name**
@@ -109,6 +109,47 @@ describing where we can improve.   Now on with the show...
         1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
     1. In lower-right, click "Create stack" button.
 1. Senzing formation takes about 15 minutes to fully deploy.
+
+### Review AWS Cloudformation
+
+The AWS resources created by the
+[cloudformation.yaml](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple/blob/main/cloudformation.yaml)
+template can be see in the [AWS Management Console](https://console.aws.amazon.com).
+
+1. CloudFormation
+    1. [Stacks](https://console.aws.amazon.com/cloudformation/home?#/stacks)
+1. CloudWatch
+    1. [Log groups](https://console.aws.amazon.com/cloudwatch/home?#logsV2:log-groups)
+1. Elastic Compute Cloud (EC2)
+    1. [Load Balancers](https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers:)
+    1. [Network interfaces](https://console.aws.amazon.com/ec2/v2/home?#NIC)
+    1. [Target groups](https://console.aws.amazon.com/ec2/v2/home?#TargetGroups:)
+1. Elastic Container Service (ECS)
+    1. [Clusters](https://console.aws.amazon.com/ecs/home?#/clusters)
+    1. [Task Definitions](https://console.aws.amazon.com/ecs/home?#/taskDefinitions)
+1. Elastic File System (EFS)
+    1. [File systems](https://console.aws.amazon.com/efs/home?#/filesystems)
+1. Identity and Access Management (IAM)
+    1. [Policies](https://console.aws.amazon.com/iam/home?#/policies)
+    1. [Roles](https://console.aws.amazon.com/iam/home?#/roles)
+1. Lambda
+    1. [Functions](https://console.aws.amazon.com/lambda/home?#/functions)
+1. Relational Data Service (RDS)
+    1. [Databases](https://console.aws.amazon.com/rds/home?#databases:)
+    1. [Parameter groups](https://console.aws.amazon.com/rds/home?#parameter-groups:)
+    1. [Subnet groups](https://console.aws.amazon.com/rds/home?#db-subnet-groups-list:)
+1. Simple Queue Service (SQS)
+    1. [Queues](https://console.aws.amazon.com/sqs/v2/home)
+1. Virtual Private Cloud (VPC)
+    1. [Elastic IP addresses](https://console.aws.amazon.com/vpc/home?#Addresses:)
+    1. [Endpoints](https://console.aws.amazon.com/vpc/home?#Endpoints:)
+    1. [Internet gateways](https://console.aws.amazon.com/vpc/home?#igws)
+    1. [NAT gateways](https://console.aws.amazon.com/vpc/home?#NatGateways:)
+    1. [Network ACLs](https://console.aws.amazon.com/vpc/home?#acls)
+    1. [Route Tables](https://console.aws.amazon.com/vpc/home?#RouteTables)
+    1. [Security Groups](https://console.aws.amazon.com/vpc/home?#SecurityGroups)
+    1. [Subnets](https://console.aws.amazon.com/vpc/home?#subnets)
+    1. [VPCs](https://console.aws.amazon.com/vpc/home?#vpcs)
 
 ### View results
 

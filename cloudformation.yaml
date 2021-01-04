@@ -12,7 +12,7 @@ AWSTemplateFormatVersion: 2010-09-09
 # TODO: Jupyter inconsistent connection
 
 Description: >-
-  Senzing aws-cloudformation-ecs-poc-simple Version: 0.2.0
+  Senzing aws-cloudformation-ecs-poc-simple Version: 0.2.1
   For more information see https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
 
 # -----------------------------------------------------------------------------
@@ -106,7 +106,7 @@ Mappings:
       Username: senzing
     Run:
       ApiServer: Yes
-      Jupyter: Yes
+      Jupyter: No
       Redoer: Yes
       Sshd: Yes
       StreamLoader: Yes
@@ -720,6 +720,9 @@ Resources:
       LogGroupName: !Ref LogsLogGroupMain
       ResourceId: !Ref Ec2Vpc
       ResourceType: VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-flow-log"
       TrafficType: ALL
     Type: AWS::EC2::FlowLog
 
@@ -834,7 +837,7 @@ Resources:
 
   Ec2SecurityGroupLambdaRunner:
     Properties:
-      GroupDescription: Lambda open ports.
+      GroupDescription: !Sub "${AWS::StackName} - Lambda open ports."
       SecurityGroupEgress:
         -
           CidrIp: 0.0.0.0/0
@@ -849,7 +852,7 @@ Resources:
 
   Ec2SecurityGroupInternal:
     Properties:
-      GroupDescription: ECS internal open ports.
+      GroupDescription: !Sub "${AWS::StackName} - ECS internal open ports."
       SecurityGroupEgress:
         -
           CidrIp: 0.0.0.0/0
@@ -964,7 +967,7 @@ Resources:
 
   Ec2SecurityGroupLoadBalancerPrivate:
     Properties:
-      GroupDescription: Private load balancer open ports.
+      GroupDescription: !Sub "${AWS::StackName} - Private load balancer open ports."
       SecurityGroupEgress:
         -
           CidrIp: 0.0.0.0/0
@@ -989,7 +992,7 @@ Resources:
 
   Ec2SecurityGroupLoadBalancerPublic:
     Properties:
-      GroupDescription: Public load balancer open ports.
+      GroupDescription: !Sub "${AWS::StackName} - Public load balancer open ports."
       SecurityGroupEgress:
         -
           CidrIp: 0.0.0.0/0
@@ -1004,7 +1007,7 @@ Resources:
 
   Ec2SecurityGroupSshd:
     Properties:
-      GroupDescription: SSHD service open ports.
+      GroupDescription: !Sub "${AWS::StackName} - SSHD service open ports."
       SecurityGroupEgress:
         -
           CidrIp: 0.0.0.0/0
@@ -1375,6 +1378,9 @@ Resources:
       MessageRetentionPeriod: 1209600
       QueueName: !Sub "${AWS::StackName}-sqs-dead-letter-queue"
       ReceiveMessageWaitTimeSeconds: 0
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-sqs-queue-dead-letter"
       VisibilityTimeout: 30
     Type: AWS::SQS::Queue
 
@@ -1393,6 +1399,9 @@ Resources:
             - SqsQueueDeadLetter
             - Arn
         maxReceiveCount: 100
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-sqs-queue"
       VisibilityTimeout: 300
     Type: AWS::SQS::Queue
 
@@ -1407,6 +1416,9 @@ Resources:
 #       -
 #         Name: containerInsights
 #         Value: disabled
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ecs-cluster"
     Type: AWS::ECS::Cluster
 
 # -- LambdaFunction -----------------------------------------------------------
@@ -1725,6 +1737,9 @@ Resources:
       ClusterId: !Ref EcsCluster
       Length: 16
       ServiceToken: !GetAtt LambdaFunctionRandomString.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-db-password"
     Type: Custom::LambdaRunnerDbPassword
 
 
@@ -1750,8 +1765,11 @@ Resources:
         platformVersion: 1.4.0
         tags:
           - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-init-efs"
+            value: !Sub "${AWS::StackName}-lambda-runner-init-efs-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInitEfs
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-init-efs"
       ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInitEfs
 
@@ -1777,8 +1795,11 @@ Resources:
         platformVersion: 1.4.0
         tags:
           - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-yum"
+            value: !Sub "${AWS::StackName}-lambda-runner-yum-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInstallSenzing
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-yum"
       ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInstallSenzing
 
@@ -1805,8 +1826,11 @@ Resources:
         platformVersion: 1.4.0
         tags:
           - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-core"
+            value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-core-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInitPostgresCore
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-core"
       ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInitPostgresCore
 
@@ -1833,10 +1857,14 @@ Resources:
         platformVersion: 1.4.0
         tags:
           - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-libfeat"
+            value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-libfeat-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInitPostgresLibfeat
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-libfeat"
       ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInitPostgresLibfeat
+
 
   LambdaRunnerInitPostgresRes:
     DependsOn:
@@ -1860,10 +1888,14 @@ Resources:
         platformVersion: 1.4.0
         tags:
           - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-res"
+            value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-res-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInitPostgresRes
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-init-postgres-res"
       ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInitPostgresRes
+
 
   LambdaRunnerInitSenzing:
     DependsOn:
@@ -1888,8 +1920,11 @@ Resources:
         platformVersion: 1.4.0
         tags:
           - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-init-senzing"
+            value: !Sub "${AWS::StackName}-lambda-runner-init-senzing-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionInitSenzing
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-init-senzing"
       ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerInitSenzing
 
@@ -1899,6 +1934,9 @@ Resources:
       ClusterId: !Ref EcsCluster
       Length: 16
       ServiceToken: !GetAtt LambdaFunctionRandomString.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-ssh-password"
     Type: Custom::LambdaRunnerSshPassword
 
 
@@ -1907,6 +1945,9 @@ Resources:
       ClusterId: !Ref EcsCluster
       InputString: !Sub "${AWS::StackName}"
       ServiceToken: !GetAtt LambdaFunctionStringToLower.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-stack-name-as-lower"
     Type: Custom::LambdaRunnerStackNameAsLower
 
 
@@ -1934,9 +1975,12 @@ Resources:
         platformVersion: 1.4.0
         tags:
           - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-init-senzing"
+            value: !Sub "${AWS::StackName}-lambda-runner-stream-producer-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionStreamProducer
       ServiceToken: !GetAtt LambdaFunctionRunTask.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-stream-producer"
     Type: Custom::LambdaRunnerStreamProducer
 
 
@@ -1946,6 +1990,9 @@ Resources:
       DescribeMountTargetsParameters:
         MountTargetId: !Ref EfsMountTarget1
       ServiceToken: !GetAtt LambdaFunctionWaitForEfs.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-wait-for-efs-mount-target-1"
     Type: Custom::LambdaRunnerWaitForEfsMountTarget1
 
 
@@ -1955,6 +2002,9 @@ Resources:
       DescribeMountTargetsParameters:
         MountTargetId: !Ref EfsMountTarget2
       ServiceToken: !GetAtt LambdaFunctionWaitForEfs.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-wait-for-efs-mount-target-2"
     Type: Custom::LambdaRunnerWaitForEfsMountTarget2
 
 # -- Load balancing -----------------------------------------------------------
@@ -3148,12 +3198,12 @@ Resources:
               awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: job
-          Name: producer1
+          Name: producer
           Privileged: false
           ReadonlyRootFilesystem: false
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleStreamProducer.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-stream-producer-1"
+      Family: !Sub "${AWS::StackName}-task-definition-stream-producer"
       Memory: '8192'
       NetworkMode: awsvpc
       RequiresCompatibilities:
@@ -3330,7 +3380,7 @@ Resources:
   EcsServiceApiServer:
     Condition: IfRunApiServer
     DependsOn:
-     - LambdaRunnerInitEfs
+     - LambdaRunnerInitSenzing
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3366,7 +3416,7 @@ Resources:
   EcsServiceJupyter:
     Condition: IfRunJupyter
     DependsOn:
-     - LambdaRunnerInitEfs
+     - LambdaRunnerInitSenzing
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3425,7 +3475,7 @@ Resources:
   EcsServiceSshd:
     Condition: IfRunSshd
     DependsOn:
-     - LambdaRunnerInitEfs
+     - LambdaRunnerInitSenzing
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3479,7 +3529,7 @@ Resources:
   EcsServiceSwagger:
     Condition: IfRunSwagger
     DependsOn:
-     - LambdaRunnerInitEfs
+     - LoadBalancerPublic
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3511,7 +3561,7 @@ Resources:
   EcsServiceWebApp:
     Condition: IfRunWebApp
     DependsOn:
-     - LambdaRunnerInitEfs
+     - LoadBalancerPublic
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3543,7 +3593,7 @@ Resources:
   EcsServiceXterm:
     Condition: IfRunXterm
     DependsOn:
-     - LambdaRunnerInitEfs
+     - LambdaRunnerInitSenzing
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
