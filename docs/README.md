@@ -110,6 +110,36 @@ describing where we can improve.   Now on with the show...
     1. In lower-right, click "Create stack" button.
 1. Senzing formation takes about 15 minutes to fully deploy.
 
+### Review AWS Cloudformation
+
+1. Cloudformation
+    1. [stacks](https://console.aws.amazon.com/cloudformation/home?#/stacks)
+    1. [task definitions](https://console.aws.amazon.com/ecs/home?#/taskDefinitions)
+1. Cloudwatch
+    1. [log groups](https://console.aws.amazon.com/cloudwatch/home?#logsV2:log-groups)
+1. Elastic Compute Cloud (EC2)
+    1. [network interfaces](https://console.aws.amazon.com/ec2/v2/home?#NIC)
+1. Elastic Container Service (ECS)
+    1. [clusters](https://console.aws.amazon.com/ecs/home?#/clusters)
+    1. [task definitions](https://console.aws.amazon.com/ecs/home?#/taskDefinitions)
+1. Elastic File System (EFS)
+    1. [File systems](https://console.aws.amazon.com/efs/home?#/filesystems)
+1. Identity and Access Management (IAM)
+    1. [Roles](https://console.aws.amazon.com/iam/home?#/roles)
+    1. [Policies](https://console.aws.amazon.com/iam/home?#/policies)
+1. Relational Data Service (RDS)
+    1. [databases](https://console.aws.amazon.com/rds/home?#databases:)
+    1. [parameter groups](https://console.aws.amazon.com/rds/home?#parameter-groups:)
+1. Simple Queue Service (SQS)
+    1. [Queues](https://console.aws.amazon.com/sqs/v2/home)
+1. Virtual Private Cloud (VPC)
+    1. [internet gateways](https://console.aws.amazon.com/vpc/home?#igws)
+    1. [network acls](https://console.aws.amazon.com/vpc/home?#acls)
+    1. [route tables](https://console.aws.amazon.com/vpc/home?#RouteTables)
+    1. [security groups](https://console.aws.amazon.com/vpc/home?#SecurityGroups)
+    1. [subnets](https://console.aws.amazon.com/vpc/home?#subnets)
+    1. [vpc](https://console.aws.amazon.com/vpc/home?#vpcs)
+
 ### View results
 
 1. Visit [AWS Cloudformation console](https://console.aws.amazon.com/cloudformation/home).
