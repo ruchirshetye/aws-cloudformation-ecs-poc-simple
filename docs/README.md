@@ -48,8 +48,8 @@ This docker formation brings up the following docker containers:
 1. *[senzing/stream-producer](https://github.com/Senzing/stream-producer)*
 1. *[senzing/xterm](https://github.com/Senzing/docker-xterm)*
 
-Help for
-[aws-cloudformation-ecs-poc-simple](https://github.com/Senzing/aws-cloudformation-ecs/tree/main/cloudformation/aws-cloudformation-ecs-poc-simple).
+GitHub repository for
+[aws-cloudformation-ecs-poc-simple](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple).
 
 ### Contents
 
@@ -69,7 +69,7 @@ For the most part, instructions are copy and paste.
 Whenever thinking is needed, it's marked with a "thinking" icon :thinking:.
 Whenever customization is needed, it's marked with a "pencil" icon :pencil2:.
 If the instructions are not clear, please let us know by opening a new
-[Documentation issue](https://github.com/Senzing/aws-cloudformation-ecs/issues/new?template=documentation_request.md)
+[Documentation issue](https://github.com/Senzing/aws-cloudformation-ecs-poc-simple/issues/new?template=documentation_request.md)
 describing where we can improve.   Now on with the show...
 
 ### Legend
@@ -91,7 +91,7 @@ describing where we can improve.   Now on with the show...
 
 ### Launch AWS Cloudformation
 
-1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3-external-1.amazonaws.com/cf-templates-xoqvergspzx7-us-east-1/2020366HsM-cloudformation.yaml)
+1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3-external-1.amazonaws.com/cf-templates-xoqvergspzx7-us-east-1/2021004xWV-cloudformation.yaml)
 1. In lower-right, click on "Next" button.
 1. In **Specify stack details**
     1. In **Stack name**
