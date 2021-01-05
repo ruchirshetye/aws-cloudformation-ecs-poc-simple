@@ -4,6 +4,7 @@ AWSTemplateFormatVersion: 2010-09-09
 # Tests:
 #     Lint: https://github.com/aws-cloudformation/cfn-python-lint
 #     Nag: https://github.com/stelligent/cfn_nag
+#     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 # TODO: Create resource(s) that guarantee EFS is "available". https://console.aws.amazon.com/support/home#/case/?displayId=7705802111&language=en
 # TODO: When hub.senzing.com is available, fix Help URLs.
@@ -12,7 +13,7 @@ AWSTemplateFormatVersion: 2010-09-09
 # TODO: Jupyter inconsistent connection
 
 Description: >-
-  Senzing aws-cloudformation-ecs-poc-simple Version: 0.2.1
+  Senzing aws-cloudformation-ecs-poc-simple Version: 0.2.2
   For more information see https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
 
 # -----------------------------------------------------------------------------
@@ -3381,6 +3382,8 @@ Resources:
     Condition: IfRunApiServer
     DependsOn:
      - LambdaRunnerInitSenzing
+     - ListenerApiServerPublic
+     - ListenerApiServerPrivate
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3417,6 +3420,7 @@ Resources:
     Condition: IfRunJupyter
     DependsOn:
      - LambdaRunnerInitSenzing
+     - ListenerJupyter
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3429,7 +3433,7 @@ Resources:
           TargetGroupArn: !Ref TargetGroupJupyter
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref Ec2SecurityGroupInternal
           Subnets:
@@ -3529,7 +3533,7 @@ Resources:
   EcsServiceSwagger:
     Condition: IfRunSwagger
     DependsOn:
-     - LoadBalancerPublic
+     - ListenerSwagger
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3562,6 +3566,7 @@ Resources:
     Condition: IfRunWebApp
     DependsOn:
      - LoadBalancerPublic
+     - ListenerWebApp
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3594,6 +3599,7 @@ Resources:
     Condition: IfRunXterm
     DependsOn:
      - LambdaRunnerInitSenzing
+     - ListenerXterm
     Properties:
       Cluster: !Ref EcsCluster
       DesiredCount: 1
@@ -3606,7 +3612,7 @@ Resources:
           TargetGroupArn: !Ref TargetGroupXterm
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref Ec2SecurityGroupInternal
           Subnets:
