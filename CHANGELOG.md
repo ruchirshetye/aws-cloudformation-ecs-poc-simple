@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2021-01-05
+
+### Fixed in 0.2.2
+
+- Modified DependsOn values
+- Disabled Public IP addresses
+
 ## [0.2.1] - 2021-01-04
 
 ### Fixed in 0.2.1
