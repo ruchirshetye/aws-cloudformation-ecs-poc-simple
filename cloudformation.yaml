@@ -11,15 +11,6 @@ AWSTemplateFormatVersion: 2010-09-09
 # TODO: Cleanup "nag" errors and warnings
 # TODO: In Rules, fix detection of empty strings
 # TODO: Jupyter inconsistent connection
-#
-# ANT
-# ---
-#
-# - Changed the ApplicationAutoScalingScalableTarget resources to use a service role
-# - iampolicy* resources not used?
-# - Can further privs be moved into the service linked roles?
-# - Can CFn-Service-Role be cleaned up?
-#     - If CFn/instructions for admins/dev-ops remove iam create service role
 
 Description: >-
   Senzing aws-cloudformation-ecs-poc-simple Version: 0.2.2
@@ -510,8 +501,6 @@ Resources:
     Type: AWS::IAM::Role
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
-
-#### Did commenting these out give: Failed to create resource. See the details in CloudWatch Log Stream: 2021/01/20/[$LATEST]f8446805d1324279a9909a89901915f4
 
   IamPolicyEfs:
     Properties:
@@ -3647,14 +3636,7 @@ Resources:
       MaxCapacity: 200
       MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceApiServer.Name}"
-#### These can't be empty
-#### https://docs.aws.amazon.com/autoscaling/application/userguide/application-auto-scaling-service-linked-roles.html#create-service-linked-role-manual
-#### https://docs.aws.amazon.com/autoscaling/application/APIReference/API_RegisterScalableTarget.html
-####    Can this be the service role ?
-####    How about the CFn role?
-####      RoleARN: !GetAtt IamRoleApiServer.Arn
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
-      #RoleARN: arn:aws:iam::380965835931:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
       SuspendedState:
@@ -3669,9 +3651,7 @@ Resources:
       MaxCapacity: 200
       MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceStreamLoader.Name}"
-####      RoleARN: !GetAtt IamRoleStreamLoader.Arn
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
-      #RoleARN: arn:aws:iam::380965835931:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
       SuspendedState:
@@ -3680,27 +3660,13 @@ Resources:
         ScheduledScalingSuspended: false
     Type: AWS::ApplicationAutoScaling::ScalableTarget
 
-####
-#### After deleting the service roles and trying fresh got:
-#### Cross-account pass role is not allowed. (Service: AWSApplicationAutoScaling; Status Code: 400; Error Code: AccessDeniedException; Request ID: cc230933-ca82-4e4a-90e0-c52963b85876; Proxy: null)
-####   AWSServiceRoleForApplicationAutoScaling_ECSService - This was missing and wasn't auto created after the delete
-####      Ran: aws iam create-service-linked-role --aws-service-name ecs.application-autoscaling.amazonaws.com
-####
-#### On another fresh try got:
-####    ApplicationAutoScalingScalableTargetWebApp --> Unable to assume IAM role: arn:aws:iam::380965835931:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService (Service: AWSApplicationAutoScaling; Status Code: 400; Error Code: ValidationException; Request ID: aa739cee-7a40-4c0d-b4d3-b2c9397e3eb4; Proxy: null)
-####    The role was there!
-####    Run a 2nd time and it completed with no additional changes
-####    Looks like a timing issue with the service linked roles being auto-created.
-
 
   ApplicationAutoScalingScalableTargetWebApp:
     Properties:
       MaxCapacity: 200
       MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceWebApp.Name}"
-####      RoleARN: !GetAtt IamRoleWebApp.Arn
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
-      #RoleARN: arn:aws:iam::380965835931:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
       SuspendedState:
@@ -3759,7 +3725,6 @@ Resources:
 
 Outputs:
 
-####
   AccountID:
     Description: 'The accountID'
     Value: !Sub "${AWS::AccountId}"
