@@ -3636,7 +3636,7 @@ Resources:
       MaxCapacity: 200
       MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceApiServer.Name}"
-      RoleARN: !GetAtt IamRoleApiServer.Arn
+      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
       SuspendedState:
@@ -3651,7 +3651,7 @@ Resources:
       MaxCapacity: 200
       MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceStreamLoader.Name}"
-      RoleARN: !GetAtt IamRoleStreamLoader.Arn
+      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
       SuspendedState:
@@ -3666,7 +3666,7 @@ Resources:
       MaxCapacity: 200
       MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceWebApp.Name}"
-      RoleARN: !GetAtt IamRoleWebApp.Arn
+      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
       SuspendedState:
@@ -3724,6 +3724,10 @@ Resources:
 # -----------------------------------------------------------------------------
 
 Outputs:
+
+  AccountID:
+    Description: 'The accountID'
+    Value: !Sub "${AWS::AccountId}"
 
   ApiServerHeartbeatUrl:
     Condition: IfRunApiServer
