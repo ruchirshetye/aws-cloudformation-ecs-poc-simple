@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2021-02-03
+
+### Added in 0.2.4
+
+- `SshUsername` output variable
+
+### Changed in 0.2.4
+
+- Updated to latest Docker images
+  - senzing/init-container:1.6.5
+  - senzing/stream-loader:1.7.0
+  - senzing/stream-producer:1.3.1
+  - senzing/entity-search-web-app:2.2.1
+- Changed output variable names to collate better
+  - `ApiServerHeartbeatUrl` is now `UrlApiServerHeartbeat`
+  - `JupyterUrl` is now `UrlJupyter`
+  - `SwaggerUrl` is now `UrlSwagger`
+  - `WebAppUrl` is now `UrlWebApp`
+  - `XtermUrl` is now `UrlXterm`
+- Modified host in URLs from `senzing.github.io` to `hub.senzing.com`
+
 ## [0.2.3] - 2021-01-21
 
 ### Fixed in 0.2.3
