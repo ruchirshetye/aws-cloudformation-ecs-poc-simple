@@ -232,14 +232,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 ### ApiServerHeartbeatUrl
 
-1. **Synopsis:**
-   A URL showing how to reach the
-   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
-   directly.
-   The `/heartbeat` URI path simply demonstrates that the API server is responding.
-1. **Details:**
-   For more URIs, see
-   [SwaggerUrl output value](#swaggerurl).
+1. See [UrlApiServerHeartbeat](#urlapiserverheartbeat)
 
 ### DatabaseHostCore
 
@@ -307,13 +300,11 @@ Technical information on AWS Cloudformation parameters can be seen at
    The hostname of the loadbalancer that is a proxy to all of the services.
 1. **Details:**
    More information at [AWS Load Balancers console](https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers:).
-   Also used as the `host` value when using [SwaggerUrl](#swaggerurl).
+   Also used as the `host` value when using [UrlSwagger](#urlswagger).
 
 ### JupyterUrl
 
-1. **Synopsis:**
-   A URL showing how to reach the
-   [Jupyter Notebooks](https://github.com/Senzing/docker-jupyter).
+1. See [UrlJupyter](#urljupyter)
 
 ### Queue
 
@@ -336,6 +327,13 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Synopsis:**
    A randomly generated password to be used with the sshd tasks.
 
+### SshUsername
+
+1. **Synopsis:**
+   The username to be used with the sshd tasks.
+1. **Details:**
+   Usually "root".
+
 ### SubnetPublic1
 
 1. **Synopsis:**
@@ -354,24 +352,45 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 ### SwaggerUrl
 
+1. See [UrlSwagger](#urlswagger)
+
+### UrlApiServerHeartbeat
+
+1. **Synopsis:**
+   A URL showing how to reach the
+   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
+   directly.
+   The `/heartbeat` URI path simply demonstrates that the API server is responding.
+1. **Details:**
+   For more URIs, see
+   [UrlSwagger output value](#urlswagger).
+
+### UrlJupyter
+
+1. **Synopsis:**
+   A URL showing how to reach the
+   [Jupyter Notebooks](https://github.com/Senzing/docker-jupyter).
+
+### UrlSwagger
+
 1. **Synopsis:**
    A URL showing how to reach the
    [Swagger User Interface](https://github.com/swagger-api/swagger-ui).
 1. **Usage:**
    To access the Senzing API server
-    1. Using the URL, visit the `SwaggerUrl` webpage.
+    1. Using the URL, visit the `UrlSwagger` webpage.
     1. In **Servers**
         1. From the drop-down, select `{protocol}://{host}:{port}`.
         1. In the **Host** field, enter the value of [Host](#host).
     1. The HTTP URIs will now access the deployed Senzing API server.
 
-### WebAppUrl
+### UrlWebApp
 
 1. **Synopsis:**
    A URL showing how to reach the
    [Senzing Entity Search Web App](https://github.com/Senzing/entity-search-web-app).
 
-### XtermUrl
+### UrlXterm
 
 1. **Synopsis:**
    A URL showing how to reach the
@@ -379,3 +398,11 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Usage:**
    From this Linux terminal, `G2Command.py`, `G2Explorer.py`, `G2ConfigTool.py`,
    can be run.
+
+### WebAppUrl
+
+1. See [UrlWebApp](#urlwebapp)
+
+### XtermUrl
+
+1. See [UrlXterm](#urlxterm)
