@@ -3198,6 +3198,11 @@ Resources:
               awslogs-group: !Ref LogsLogGroupMain
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: job
+          MountPoints:
+            -
+              SourceVolume: senzing-var-dir
+              ContainerPath: /var/opt/senzing
+              ReadOnly: false
           Name: producer
           Privileged: false
           ReadonlyRootFilesystem: false
@@ -3212,6 +3217,14 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-ecs-task-definition-stream-producer"
       TaskRoleArn: !GetAtt IamRoleStreamProducer.Arn
+      Volumes:
+        -
+          Name: senzing-var-dir
+          EFSVolumeConfiguration:
+              AuthorizationConfig: {}
+              FilesystemId:
+                Ref: EfsFileSystem
+              RootDirectory: /var
     Type: AWS::ECS::TaskDefinition
 
 
