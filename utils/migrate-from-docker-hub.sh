@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # Enumerate docker images to be migrated.
+# Format: "SOURCE_IMAGE;TARGET_IMAGE"
 
 DOCKER_IMAGE_NAMES=(
     "busybox;public.ecr.aws/d5v4a2g3/busybox"
