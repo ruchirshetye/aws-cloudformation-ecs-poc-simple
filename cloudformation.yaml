@@ -2697,7 +2697,7 @@ Resources:
               Name: SENZING_ACCEPT_EULA
               Value: !Ref AcceptEula
           Essential: true
-          Image: senzing/yum:1.1.3
+          Image: public.ecr.aws/d5v4a2g3/yum:1.1.3
           LogConfiguration:
             LogDriver: awslogs
             Options:
