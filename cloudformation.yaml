@@ -6,11 +6,6 @@ AWSTemplateFormatVersion: 2010-09-09
 #     Nag: https://github.com/stelligent/cfn_nag
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
-# TODO: Create resource(s) that guarantee EFS is "available". https://console.aws.amazon.com/support/home#/case/?displayId=7705802111&language=en
-# TODO: Cleanup "nag" errors and warnings
-# TODO: In Rules, fix detection of empty strings
-# TODO: Jupyter inconsistent connection
-
 Description: >-
   Senzing aws-cloudformation-ecs-poc-simple Version: 0.2.7
   For more information see https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
@@ -2959,6 +2954,9 @@ Resources:
             -
               Name: ROOT_PASSWORD
               Value: !GetAtt LambdaRunnerSshPassword.RandomString
+            -
+              Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
+              Value: 'true'
           Essential: true
           Image: public.ecr.aws/d5v4a2g3/sshd:1.0.3
           LinuxParameters:
@@ -3309,6 +3307,10 @@ Resources:
     Properties:
       ContainerDefinitions:
         -
+          Environment:
+            -
+              Name: SENZING_SKIP_DATABASE_PERFORMANCE_TEST
+              Value: 'true'
           Essential: true
           Image: public.ecr.aws/d5v4a2g3/xterm:1.0.3
           LinuxParameters:
