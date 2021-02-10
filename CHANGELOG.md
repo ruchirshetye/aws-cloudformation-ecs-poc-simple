@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] - 2021-02-10
+
+### Added in 0.2.7
+
+- `SENZING_SKIP_DATABASE_PERFORMANCE_TEST` environment variable set in Xterm and Sshd containers.
+  Already exists in Stream-loader.
+
 ## [0.2.6] - 2021-02-08
 
 ### Added in 0.2.6
