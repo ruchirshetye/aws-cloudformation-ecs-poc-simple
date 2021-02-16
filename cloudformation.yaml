@@ -2058,6 +2058,10 @@ Resources:
   LoadBalancerPublicS3AccessLogs:
     Type: 'AWS::S3::Bucket'
     DeletionPolicy: Retain
+    BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
     PublicAccessBlockConfiguration:
       - BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -2069,6 +2073,10 @@ Resources:
   LoadBalancerPrivateS3AccessLogs:
     Type: 'AWS::S3::Bucket'
     DeletionPolicy: Retain
+    BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
     PublicAccessBlockConfiguration:
       - BlockPublicAcls: true
         BlockPublicPolicy: true
