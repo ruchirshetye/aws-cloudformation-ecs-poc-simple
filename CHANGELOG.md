@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2021-02-16
+
+### Changed in 0.2.8
+
+- Docker image URL changed from `public.ecr.aws/d5v4a2g3` to `public.ecr.aws/senzing`
+
 ## [0.2.7] - 2021-02-10
 
 ### Added in 0.2.7
