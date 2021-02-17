@@ -174,6 +174,23 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_accept_eula).
 1. **Default:** None
 
+### AcknowledgeInsecureSystem
+
+1. **Synopsis:**
+   To reduce the need for heavy-handed AWS administration for this simple proof-of-concept,
+   the default deployment of this CloudFormation doesn't configure:
+    1. HTTPS
+    1. User authentication
+   In other words, the endpoint are open to the public and the traffic across the network is not encrypted.
+   For this reason, it is the user's responsibility to avoid putting sensitive data into the default deployment.
+   To enable additional security measures for the deployment in your specific environment,
+   you'll need to consult with your AWS administrator.
+1. **Required:** Yes
+1. **Type:** String
+1. **Allowed values:**
+    1. "I acknowledge"
+1. **Default:** None
+
 ### CidrInbound
 
 1. **Synopsis:** The password used to access the AWS Aurora Postgres Serverless databases.

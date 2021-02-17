@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-poc-simple Version: 0.2.8
+  Senzing aws-cloudformation-ecs-poc-simple Version: 0.2.9
   For more information see https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
 
 # -----------------------------------------------------------------------------
@@ -18,6 +18,11 @@ Description: >-
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
+      -
+        Label:
+          default: Acknowledge insecure system
+        Parameters:
+          - AcknowledgeInsecureSystem
       -
         Label:
           default: Senzing installation
@@ -35,6 +40,11 @@ Metadata:
           Required: If you accept the Senzing End User License Agreements at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
+      AcknowledgeInsecureSystem:
+        default: >-
+          I acknowledge that the security of this deployment and the data I process with it is my responsibility.
+          A default deployment of this template will expose publicly available endpoints.
+          If you have any questions on security, please consult with your AWS administrator.
       CidrInbound:
         default: 'Required: Allowed inbound connections using CIDR notation.'
       SenzingLicenseAsBase64:
@@ -54,6 +64,13 @@ Parameters:
     ConstraintDescription: AcceptEula parameter must be 'I_ACCEPT_THE_SENZING_EULA'
     Default: '_'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#accepteula'
+    Type: String
+
+  AcknowledgeInsecureSystem:
+    AllowedPattern: '.+|^I acknowledge$'
+    ConstraintDescription: AcknowledgeInsecureSystem parameter must be 'I acknowldge'
+    Default: '_'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#acknowledgeinsecuresystem'
     Type: String
 
   CidrInbound:
@@ -87,6 +104,12 @@ Rules:
           - !Ref AcceptEula
           - I_ACCEPT_THE_SENZING_EULA
         AssertDescription: 'EULA acceptance incorrect.  Enter "I_ACCEPT_THE_SENZING_EULA"'
+  ConfirmAcknowledgeInsecureSystem:
+    Assertions:
+      - Assert: !Equals
+          - !Ref AcknowledgeInsecureSystem
+          - 'I acknowledge'
+        AssertDescription: 'Entering "I acknowledge" is required to proceed.'
 
 # -----------------------------------------------------------------------------
 # Mappings
