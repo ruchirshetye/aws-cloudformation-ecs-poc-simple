@@ -181,6 +181,7 @@ Technical information on AWS Cloudformation parameters can be seen at
    the default deployment of this CloudFormation doesn't configure:
     1. HTTPS
     1. User authentication
+
    In other words, the endpoint are open to the public and the traffic across the network is not encrypted.
    For this reason, it is the user's responsibility to avoid putting sensitive data into the default deployment.
    To enable additional security measures for the deployment in your specific environment,
