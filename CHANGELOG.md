@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.10] - 2021-02-19
+
+### Changed in 0.2.10
+
+- Updated docker image versions:
+  - public.ecr.aws/senzing/init-container:1.6.6
+  - public.ecr.aws/senzing/redoer:1.3.5
+  - public.ecr.aws/senzing/senzing-api-server:2.3.2
+  - public.ecr.aws/senzing/stream-loader:1.7.1
+  - public.ecr.aws/senzing/stream-producer:1.3.3
+  - public.ecr.aws/senzing/xterm:1.0.5
+  - public.ecr.aws/senzing/yum:1.1.4
+
 ## [0.2.9] - 2021-02-17
 
 ### Changed in 0.2.9
