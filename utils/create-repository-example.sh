@@ -11,11 +11,16 @@ DOCKER_REPOSITORIES=(
 for DOCKER_REPOSITORY in ${DOCKER_REPOSITORIES[@]};
 do
 
-    # https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ecr/create-repository.html
+    # https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ecr-public/create-repository.html
 
-    aws ecr create-repository \
-        --repository-name ${DOCKER_REPOSITORY} \
-        --image-tag-mutability IMMUTABLE \
-        --image-scanning-configuration scanOnPush=true
+    aws ecr-public create-repository \
+        --repository-name ${DOCKER_REPOSITORY}
+
+    # Wish list.
+
+#   aws ecr-public create-repository \
+#       --repository-name ${DOCKER_REPOSITORY} \
+#       --image-tag-mutability IMMUTABLE \
+#       --image-scanning-configuration scanOnPush=true
 
 done
