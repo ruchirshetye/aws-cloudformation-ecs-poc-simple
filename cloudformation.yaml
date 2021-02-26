@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-poc-simple Version: 0.2.10
+  Senzing aws-cloudformation-ecs-poc-simple Version: 0.3.0
   For more information see https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
 
 # -----------------------------------------------------------------------------
@@ -42,9 +42,12 @@ Metadata:
           enter 'I_ACCEPT_THE_SENZING_EULA'.
       AcknowledgeInsecureSystem:
         default: >-
-          I acknowledge that the security of this deployment and the data I process with it is my responsibility.
-          A default deployment of this template will expose publicly available endpoints.
-          If you have any questions on security, please consult with your AWS administrator.
+          This system is for public demonstration only.
+          Use only synthetic data.
+          Any authentic PII data is exposed.
+          Please contact support@senzing.com if you wish to discuss secure deployments.
+          Senzing, Inc. will not be responsible for the exposure of sensitive data.
+          To acknowledge your acceptance and agreement of the foregoing, type “I AGREE”.
       CidrInbound:
         default: 'Required: Allowed inbound connections using CIDR notation.'
       SenzingLicenseAsBase64:
@@ -67,8 +70,8 @@ Parameters:
     Type: String
 
   AcknowledgeInsecureSystem:
-    AllowedPattern: '.+|^I acknowledge$'
-    ConstraintDescription: AcknowledgeInsecureSystem parameter must be 'I acknowldge'
+    AllowedPattern: '.+|^I AGREE$'
+    ConstraintDescription: AcknowledgeInsecureSystem parameter must be 'I AGREE'
     Default: '_'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#acknowledgeinsecuresystem'
     Type: String
@@ -108,8 +111,8 @@ Rules:
     Assertions:
       - Assert: !Equals
           - !Ref AcknowledgeInsecureSystem
-          - 'I acknowledge'
-        AssertDescription: 'Entering "I acknowledge" is required to proceed.'
+          - 'I AGREE'
+        AssertDescription: 'Entering "I AGREE" is required to proceed.'
 
 # -----------------------------------------------------------------------------
 # Mappings
@@ -647,7 +650,6 @@ Resources:
             Effect: Allow
             Resource:
               - !GetAtt SqsQueue.Arn
-              - !GetAtt SqsQueueDeadLetter.Arn
         Version: '2012-10-17'
       Roles:
        - !Ref IamRoleStreamLoader
@@ -665,9 +667,10 @@ Resources:
             Effect: Allow
             Resource:
               - !GetAtt SqsQueue.Arn
-              - !GetAtt SqsQueueDeadLetter.Arn
+              - !GetAtt SqsQueueInfo.Arn
         Version: '2012-10-17'
       Roles:
+       - !Ref IamRoleStreamLoader
        - !Ref IamRoleStreamProducer
     Type: AWS::IAM::Policy
 
@@ -1423,6 +1426,21 @@ Resources:
       VisibilityTimeout: 300
     Type: AWS::SQS::Queue
 
+
+  SqsQueueInfo:
+    Properties:
+      DelaySeconds: 0
+      KmsMasterKeyId: alias/aws/sqs
+      MaximumMessageSize: 262144
+      MessageRetentionPeriod: 1209600
+      QueueName: !Sub "${AWS::StackName}-sqs-queue-info"
+      ReceiveMessageWaitTimeSeconds: 0
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-sqs-queue-info"
+      VisibilityTimeout: 300
+    Type: AWS::SQS::Queue
+
 # -- ECS Cluster --------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-cluster.html
@@ -2031,6 +2049,7 @@ Resources:
 
   LoadBalancerPublic:
     Properties:
+      Name: !Sub "${AWS::StackName}-load-balancer-public"
       Scheme: internet-facing
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPublic
@@ -2046,6 +2065,7 @@ Resources:
 
   LoadBalancerPrivate:
     Properties:
+      Name: !Sub "${AWS::StackName}-load-balancer-private"
       Scheme: internal
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPrivate
@@ -3103,8 +3123,11 @@ Resources:
               Name: SENZING_SQS_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueue.QueueName}"
             -
+              Name: SENZING_SQS_INFO_QUEUE_URL
+              Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueueInfo.QueueName}"
+            -
               Name: SENZING_SUBCOMMAND
-              Value: sqs
+              Value: sqs-withinfo
             -
               Name: SENZING_THREADS_PER_PROCESS
               Value: '8'

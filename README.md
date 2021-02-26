@@ -44,7 +44,7 @@ Detailed instructions at
 
 1. Provisions:
     1. AWS infrastructure: VPC, subnets, Internet Gateway, Routes, IAM Roles and Policies, Logging
-    1. AWS: EFS, SQS, 3 - AWS Aurora Postgres Serverless databases, ECS
+    1. AWS: EFS, 3 SQS queues, 3 AWS Aurora Postgres Serverless databases, ECS
     1. Senzing: Stream-loader (with autoscale), Redoer, API Server, Entity Search Web App
 
 ### What is not supported
@@ -52,4 +52,3 @@ Detailed instructions at
 1. What this doesn't support (i.e. what you don't get):
     1. Specification of existing AWS resources
         1. VPC, Subnets, RDS, SQS
-    1. WithInfo information

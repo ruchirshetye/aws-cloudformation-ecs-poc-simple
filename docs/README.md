@@ -189,7 +189,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Required:** Yes
 1. **Type:** String
 1. **Allowed values:**
-    1. "I acknowledge"
+    1. "I AGREE"
 1. **Default:** None
 
 ### CidrInbound
