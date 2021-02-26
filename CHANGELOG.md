@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2021-02-26
+
+### Added in 0.3.0
+
+- Support for "WithInfo" Queue.
+
 ## [0.2.10] - 2021-02-19
 
 ### Changed in 0.2.10

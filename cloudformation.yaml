@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-poc-simple Version: 0.2.10
+  Senzing aws-cloudformation-ecs-poc-simple Version: 0.3.0
   For more information see https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
 
 # -----------------------------------------------------------------------------
@@ -45,6 +45,7 @@ Metadata:
           I acknowledge that the security of this deployment and the data I process with it is my responsibility.
           A default deployment of this template will expose publicly available endpoints.
           If you have any questions on security, please consult with your AWS administrator.
+          To acknowledge, enter 'I acknowledge'.
       CidrInbound:
         default: 'Required: Allowed inbound connections using CIDR notation.'
       SenzingLicenseAsBase64:
@@ -1420,6 +1421,21 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-sqs-queue"
+      VisibilityTimeout: 300
+    Type: AWS::SQS::Queue
+
+
+  SqsQueueInfo:
+    Properties:
+      DelaySeconds: 0
+      KmsMasterKeyId: alias/aws/sqs
+      MaximumMessageSize: 262144
+      MessageRetentionPeriod: 1209600
+      QueueName: !Sub "${AWS::StackName}-sqs-queue-info"
+      ReceiveMessageWaitTimeSeconds: 0
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-sqs-queue-info"
       VisibilityTimeout: 300
     Type: AWS::SQS::Queue
 
@@ -3103,8 +3119,11 @@ Resources:
               Name: SENZING_SQS_QUEUE_URL
               Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueue.QueueName}"
             -
+              Name: SENZING_SQS_INFO_QUEUE_URL
+              Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/${SqsQueueInfo.QueueName}"
+            -
               Name: SENZING_SUBCOMMAND
-              Value: sqs
+              Value: sqs-withinfo
             -
               Name: SENZING_THREADS_PER_PROCESS
               Value: '8'
