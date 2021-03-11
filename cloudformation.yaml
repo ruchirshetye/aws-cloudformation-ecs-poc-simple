@@ -1006,7 +1006,7 @@ Resources:
           ToPort: 8250
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-private"
+          Value: !Sub "${AWS::StackName}-ec2-security-group-alb-private"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::SecurityGroup
 
@@ -1021,7 +1021,7 @@ Resources:
           IpProtocol: '-1'
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-load-balancer-public"
+          Value: !Sub "${AWS::StackName}-ec2-security-group-alb-public"
       VpcId: !Ref Ec2Vpc
     Type: AWS::EC2::SecurityGroup
 
@@ -2049,7 +2049,7 @@ Resources:
 
   LoadBalancerPublic:
     Properties:
-      Name: !Sub "${AWS::StackName}-load-balancer-public"
+      Name: !Sub "${AWS::StackName}-alb-public"
       Scheme: internet-facing
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPublic
@@ -2058,14 +2058,14 @@ Resources:
         - !Ref Ec2SubnetPublic2
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-load-balancer-public"
+          Value: !Sub "${AWS::StackName}-alb-public"
       Type: application
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
 
   LoadBalancerPrivate:
     Properties:
-      Name: !Sub "${AWS::StackName}-load-balancer-private"
+      Name: !Sub "${AWS::StackName}-alb-private"
       Scheme: internal
       SecurityGroups:
         - !Ref Ec2SecurityGroupLoadBalancerPrivate
@@ -2074,7 +2074,7 @@ Resources:
         - !Ref Ec2SubnetPrivate2
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-load-balancer-private"
+          Value: !Sub "${AWS::StackName}-alb-private"
       Type: application
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
