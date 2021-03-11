@@ -2100,6 +2100,8 @@ Resources:
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
+        - Key: slow_start.duration_seconds
+          Value: '120'
       TargetType: ip
       UnhealthyThresholdCount: 5
       VpcId: !Ref Ec2Vpc
@@ -2126,6 +2128,8 @@ Resources:
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: '60'
+        - Key: slow_start.duration_seconds
+          Value: '120'
       TargetType: ip
       UnhealthyThresholdCount: 5
       VpcId: !Ref Ec2Vpc
