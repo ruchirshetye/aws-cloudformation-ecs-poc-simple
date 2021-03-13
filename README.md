@@ -15,7 +15,7 @@ Detailed instructions at
     1. In **Parameters**
         1. In **Acknowledge insecure system**
             1. Understand the nature of the security in the deployment.
-            1. Once understood, enter "I acknowledge".
+            1. Once understood, enter "I AGREE".
         1. In **Senzing installation**
             1. Accept the End User Licence Agreement
     1. Other parameters are optional.
