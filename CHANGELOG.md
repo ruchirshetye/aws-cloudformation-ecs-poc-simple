@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2021-03-12
+
+### Added in 0.4.0
+
+- Added `slow_start.duration_seconds`
+- Optional importing of sample data
+
+### Changed in 0.4.0
+
+- stream-producer now specifies `SENZING_DEFAULT_DATA_SOURCE` and `SENZING_DEFAULT_ENTITY_TYPE`
+    - Removed from stream-loader
+- Updated to senzingapi-2.4.1-21064
+- Updated docker image versions:
+  - public.ecr.aws/senzing/stream-loader:1.7.2
+  - public.ecr.aws/senzing/stream-producer:1.4.0
+  - public.ecr.aws/senzing/xterm:1.1.0
+
 ## [0.3.0] - 2021-02-26
 
 ### Added in 0.3.0
