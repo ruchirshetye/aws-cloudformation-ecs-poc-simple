@@ -1845,11 +1845,11 @@ Resources:
         platformVersion: 1.4.0
         tags:
           - key: Name
-            value: !Sub "${AWS::StackName}-lambda-runner-G2ConfigTool-run-task-parameters"
+            value: !Sub "${AWS::StackName}-lambda-runner-g2configtool-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionG2ConfigTool
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-G2Configtool"
+          Value: !Sub "${AWS::StackName}-lambda-runner-g2configtool"
       ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerG2ConfigTool
 
@@ -2533,14 +2533,14 @@ Resources:
           ReadonlyRootFilesystem: false
       Cpu: '1024'
       ExecutionRoleArn: !GetAtt IamRoleG2ConfigTool.Arn
-      Family: !Sub "${AWS::StackName}-task-definition-G2ConfigTool"
+      Family: !Sub "${AWS::StackName}-task-definition-g2configtool"
       Memory: '8192'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ecs-task-definition-G2ConfigTool"
+          Value: !Sub "${AWS::StackName}-ecs-task-definition-g2configtool"
       Volumes:
         -
           Name: senzing-data-version-dir
