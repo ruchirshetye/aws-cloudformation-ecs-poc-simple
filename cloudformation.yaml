@@ -141,7 +141,6 @@ Mappings:
       Username: senzing
     Run:
       ApiServer: Yes
-#     G2ConfigTool: No
       Jupyter: No
       Redoer: Yes
       Sshd: Yes
@@ -181,10 +180,6 @@ Conditions:
   IfRunApiServer: !Equals
     - !FindInMap [Constants, Run, ApiServer]
     - Yes
-
-# IfRunG2ConfigTool: !Equals
-#   - !FindInMap [Constants, Run, G2ConfigTool]
-#   - Yes
 
   IfRunJupyter: !Equals
     - !FindInMap [Constants, Run, Jupyter]
@@ -727,25 +722,30 @@ Resources:
         - StackName: !FindInMap [Constants, Stack, Name]
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupLambdaRandomString:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-random-string"
     Type: AWS::Logs::LogGroup
+
 
   LogsLogGroupLambdaRunTask:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task"
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupLambdaRunTaskAndWait:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-run-task-and-wait"
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupLambdaStringToLower:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-string-to-lower"
     Type: AWS::Logs::LogGroup
+
 
   LogsLogGroupDbClusterCore:
     Properties:
@@ -754,6 +754,7 @@ Resources:
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupDbClusterLibfeat:
     Properties:
       LogGroupName: !Sub
@@ -761,12 +762,14 @@ Resources:
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
+
   LogsLogGroupDbClusterRes:
     Properties:
       LogGroupName: !Sub
         - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-res/postgresql"
         - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
+
 
   LogsLogGroupLambdaWaitForEfs:
     Properties:
@@ -1822,7 +1825,6 @@ Resources:
 
 
   LambdaRunnerG2ConfigTool:
-#   Condition: IfRunG2ConfigTool
     DependsOn:
      - LambdaRunnerInitSenzing
     Properties:
