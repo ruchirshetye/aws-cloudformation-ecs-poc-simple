@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.1] - 2021-03-18
 
-### Added in 0.5.1
+### Changed in 0.5.1
 
-- Use of `SENZING_G2CONFIG_GTC` and `senzing/g2configtool`
+- Reorganized (alphabetized) AWS Resource declarations.
 
 ## [0.5.0] - 2021-03-16
 
