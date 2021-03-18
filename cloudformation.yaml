@@ -16,6 +16,7 @@ Description: >-
 # -----------------------------------------------------------------------------
 
 Metadata:
+
   AWS::CloudFormation::Interface:
     ParameterGroups:
       -
@@ -60,7 +61,6 @@ Metadata:
           Required if inserting more than 100K records.
           Senzing license as base64 encoded string.
 
-
 # -----------------------------------------------------------------------------
 # Parameters
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.html
@@ -75,12 +75,14 @@ Parameters:
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#accepteula'
     Type: String
 
+
   AcknowledgeInsecureSystem:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: AcknowledgeInsecureSystem parameter must be 'I AGREE'
     Default: '_'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#acknowledgeinsecuresystem'
     Type: String
+
 
   CidrInbound:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
@@ -89,13 +91,15 @@ Parameters:
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cidrinbound'
     Type: String
 
+
   RunStreamProducer:
     AllowedValues:
       - 'No'
       - 'Yes'
     Default: 'Yes'
-    Description: 'Help: http://senzing.github.io/aws-cloudformation-ecs/senzing-demo-full-stack#runstreamproducer'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-full-stack#runstreamproducer'
     Type: String
+
 
   SenzingLicenseAsBase64:
 #   AllowedPattern: ' ^$|[^-A-Za-z0-9+\/=\s]|=[^=]|={3,}$'
@@ -110,6 +114,7 @@ Parameters:
 # -----------------------------------------------------------------------------
 
 Rules:
+
   ConfirmEula:
     Assertions:
       - Assert: !Not
@@ -121,6 +126,8 @@ Rules:
           - !Ref AcceptEula
           - I_ACCEPT_THE_SENZING_EULA
         AssertDescription: 'EULA acceptance incorrect.  Enter "I_ACCEPT_THE_SENZING_EULA"'
+
+
   ConfirmAcknowledgeInsecureSystem:
     Assertions:
       - Assert: !Equals
@@ -157,6 +164,7 @@ Mappings:
       InputUrl: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
       RecordMax: 0
       RecordMin: 0
+
 
   VpcCidrs:
     vpc:
@@ -556,23 +564,6 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
 
-  IamPolicyEfs:
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-lambda"
-      PolicyDocument:
-        Statement:
-          -
-            Action:
-              - elasticfilesystem:DescribeMountTargets
-            Effect: Allow
-            Resource:
-              - !GetAtt EfsFileSystem.Arn
-        Version: '2012-10-17'
-      Roles:
-       - !Ref IamRoleLambda
-    Type: AWS::IAM::Policy
-
-
   IamPolicyEc2FlowLogs:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-logging-create-group"
@@ -591,6 +582,23 @@ Resources:
         Version: '2012-10-17'
       Roles:
        - !Ref IamRoleFlowLog
+    Type: AWS::IAM::Policy
+
+
+  IamPolicyEfs:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-lambda"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - elasticfilesystem:DescribeMountTargets
+            Effect: Allow
+            Resource:
+              - !GetAtt EfsFileSystem.Arn
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleLambda
     Type: AWS::IAM::Policy
 
 
@@ -648,33 +656,6 @@ Resources:
     Type: AWS::IAM::Policy
 
 
-  IamPolicyTaskRunner:
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
-      PolicyDocument:
-        Statement:
-          -
-            Action:
-              - ecs:DescribeTasks
-              - ecs:RunTask
-            Effect: Allow
-            Resource:
-              - '*'
-        Version: '2012-10-17'
-      Roles:
-       - !Ref IamRoleApiServer
-       - !Ref IamRoleG2ConfigTool
-       - !Ref IamRoleJupyter
-       - !Ref IamRoleLambda
-       - !Ref IamRoleRedoer
-       - !Ref IamRoleSshd
-       - !Ref IamRoleStreamLoader
-       - !Ref IamRoleSwagger
-       - !Ref IamRoleWebApp
-       - !Ref IamRoleXterm
-    Type: AWS::IAM::Policy
-
-
   IamPolicySqsConsumer:
     Properties:
       PolicyName: !Sub "${AWS::StackName}-iam-policy-sqs-consumer"
@@ -711,15 +692,57 @@ Resources:
        - !Ref IamRoleStreamProducer
     Type: AWS::IAM::Policy
 
+  IamPolicyTaskRunner:
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-iam-policy-task-runner"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - ecs:DescribeTasks
+              - ecs:RunTask
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: '2012-10-17'
+      Roles:
+       - !Ref IamRoleApiServer
+       - !Ref IamRoleG2ConfigTool
+       - !Ref IamRoleJupyter
+       - !Ref IamRoleLambda
+       - !Ref IamRoleRedoer
+       - !Ref IamRoleSshd
+       - !Ref IamRoleStreamLoader
+       - !Ref IamRoleSwagger
+       - !Ref IamRoleWebApp
+       - !Ref IamRoleXterm
+    Type: AWS::IAM::Policy
+
 # -- Logging ------------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html
 
-  LogsLogGroupMain:
+  LogsLogGroupDbClusterCore:
     Properties:
       LogGroupName: !Sub
-        - "/senzing/${StackName}/${AWS::StackName}"
-        - StackName: !FindInMap [Constants, Stack, Name]
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-core/postgresql"
+        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
+    Type: AWS::Logs::LogGroup
+
+
+  LogsLogGroupDbClusterLibfeat:
+    Properties:
+      LogGroupName: !Sub
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-libfeat/postgresql"
+        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
+    Type: AWS::Logs::LogGroup
+
+
+  LogsLogGroupDbClusterRes:
+    Properties:
+      LogGroupName: !Sub
+        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-res/postgresql"
+        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
     Type: AWS::Logs::LogGroup
 
 
@@ -747,33 +770,17 @@ Resources:
     Type: AWS::Logs::LogGroup
 
 
-  LogsLogGroupDbClusterCore:
-    Properties:
-      LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-core/postgresql"
-        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-    Type: AWS::Logs::LogGroup
-
-
-  LogsLogGroupDbClusterLibfeat:
-    Properties:
-      LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-libfeat/postgresql"
-        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-    Type: AWS::Logs::LogGroup
-
-
-  LogsLogGroupDbClusterRes:
-    Properties:
-      LogGroupName: !Sub
-        - "/aws/rds/cluster/${StackNameAsLower}-aurora-senzing-cluster-res/postgresql"
-        - StackNameAsLower: !GetAtt LambdaRunnerStackNameAsLower.OutputString
-    Type: AWS::Logs::LogGroup
-
-
   LogsLogGroupLambdaWaitForEfs:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-wait-for-efs"
+    Type: AWS::Logs::LogGroup
+
+
+  LogsLogGroupMain:
+    Properties:
+      LogGroupName: !Sub
+        - "/senzing/${StackName}/${AWS::StackName}"
+        - StackName: !FindInMap [Constants, Stack, Name]
     Type: AWS::Logs::LogGroup
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-flowlog.html
@@ -901,21 +908,6 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
 
-  Ec2SecurityGroupLambdaRunner:
-    Properties:
-      GroupDescription: !Sub "${AWS::StackName} - Lambda open ports."
-      SecurityGroupEgress:
-        -
-          CidrIp: 0.0.0.0/0
-          Description: All
-          IpProtocol: '-1'
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-ec2-security-group-lambda-runner"
-      VpcId: !Ref Ec2Vpc
-    Type: AWS::EC2::SecurityGroup
-
-
   Ec2SecurityGroupInternal:
     Properties:
       GroupDescription: !Sub "${AWS::StackName} - ECS internal open ports."
@@ -1031,6 +1023,21 @@ Resources:
     Type: AWS::EC2::SecurityGroup
 
 
+  Ec2SecurityGroupLambdaRunner:
+    Properties:
+      GroupDescription: !Sub "${AWS::StackName} - Lambda open ports."
+      SecurityGroupEgress:
+        -
+          CidrIp: 0.0.0.0/0
+          Description: All
+          IpProtocol: '-1'
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ec2-security-group-lambda-runner"
+      VpcId: !Ref Ec2Vpc
+    Type: AWS::EC2::SecurityGroup
+
+
   Ec2SecurityGroupLoadBalancerPrivate:
     Properties:
       GroupDescription: !Sub "${AWS::StackName} - Private load balancer open ports."
@@ -1087,7 +1094,7 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
 
-  Ec2SecurityGroupIngresApiServerPublic:
+  Ec2SecurityGroupIngressApiServerPublic:
     Condition: IfRunApiServer
     Properties:
       CidrIp: !Ref CidrInbound
@@ -1099,7 +1106,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngresJupyter:
+  Ec2SecurityGroupIngressJupyter:
     Condition: IfRunJupyter
     Properties:
       CidrIp: !Ref CidrInbound
@@ -1111,7 +1118,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngresSsh:
+  Ec2SecurityGroupIngressSsh:
     Condition: IfRunSshd
     Properties:
       CidrIp: !Ref CidrInbound
@@ -1123,7 +1130,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngresSwagger:
+  Ec2SecurityGroupIngressSwagger:
     Condition: IfRunSwagger
     Properties:
       CidrIp: !Ref CidrInbound
@@ -1135,7 +1142,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngresWebApp:
+  Ec2SecurityGroupIngressWebApp:
     Condition: IfRunWebApp
     Properties:
       CidrIp: !Ref CidrInbound
@@ -1147,7 +1154,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 
-  Ec2SecurityGroupIngresXterm:
+  Ec2SecurityGroupIngressXterm:
     Condition: IfRunXterm
     Properties:
       CidrIp: !Ref CidrInbound
@@ -1196,6 +1203,14 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
 
+  Ec2RoutePrivate:
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref Ec2NatGateway
+      RouteTableId: !Ref Ec2RouteTablePrivate
+    Type: AWS::EC2::Route
+
+
   Ec2RoutePublic:
     DependsOn:
      - Ec2VpcGatewayAttachment
@@ -1203,14 +1218,6 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref Ec2InternetGateway
       RouteTableId: !Ref Ec2RouteTablePublic
-    Type: AWS::EC2::Route
-
-
-  Ec2RoutePrivate:
-    Properties:
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref Ec2NatGateway
-      RouteTableId: !Ref Ec2RouteTablePrivate
     Type: AWS::EC2::Route
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
@@ -2122,22 +2129,6 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-loadbalancer.html
 
-  LoadBalancerPublic:
-    Properties:
-      Name: !Sub "${AWS::StackName}-alb-public"
-      Scheme: internet-facing
-      SecurityGroups:
-        - !Ref Ec2SecurityGroupLoadBalancerPublic
-      Subnets:
-        - !Ref Ec2SubnetPublic1
-        - !Ref Ec2SubnetPublic2
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-alb-public"
-      Type: application
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-
-
   LoadBalancerPrivate:
     Properties:
       Name: !Sub "${AWS::StackName}-alb-private"
@@ -2150,6 +2141,22 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-alb-private"
+      Type: application
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+
+
+  LoadBalancerPublic:
+    Properties:
+      Name: !Sub "${AWS::StackName}-alb-public"
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref Ec2SecurityGroupLoadBalancerPublic
+      Subnets:
+        - !Ref Ec2SubnetPublic1
+        - !Ref Ec2SubnetPublic2
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-alb-public"
       Type: application
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
