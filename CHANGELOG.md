@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed in 0.5.2
 
 - Refactored `SENZING_ENGINE_CONFIGURATION_JSON` into SSM parameter.
+- Updated docker image versions:
+  - public.ecr.aws/senzing/entity-search-web-app:2.2.2
+  - public.ecr.aws/senzing/init-container:1.6.9
+  - public.ecr.aws/senzing/senzing-api-server:2.5.0
+  - public.ecr.aws/senzing/stream-loader:1.7.3
 
 ## [0.5.1] - 2021-03-18
 
