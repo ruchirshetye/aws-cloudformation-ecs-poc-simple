@@ -108,39 +108,6 @@ Parameters:
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#senzinglicenseasbase64'
     Type: String
 
-
-  SenzingEngineConfiguration:
-    Type: String
-    Description: XXXX
-    Default: |
-      {
-        "PIPELINE": {
-          "CONFIGPATH": "/etc/opt/senzing",
-          "RESOURCEPATH": "/opt/senzing/g2/resources",
-          "SUPPORTPATH": "/opt/senzing/data"
-        },
-        "SQL": {
-          "BACKEND": "HYBRID",
-          "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
-        },
-       "C1": {
-          "CLUSTER_SIZE": "1",
-          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
-        },
-        "C2": {
-          "CLUSTER_SIZE": "1",
-          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
-        },
-        "HYBRID": {
-          "LIB_FEAT": "C2",
-          "LIB_FEAT_HKEY": "C2",
-          "RES_FEAT": "C1",
-          "RES_FEAT_EKEY": "C1",
-          "RES_FEAT_LKEY": "C1",
-          "RES_FEAT_STAT": "C1"
-        }
-      }
-
 # -----------------------------------------------------------------------------
 # Rules
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/rules-section-structure.html
@@ -179,35 +146,6 @@ Mappings:
     Database:
       Name: G2
       Username: senzing
-    Engine:
-      Configuration: >-
-        {
-          "PIPELINE": {
-            "CONFIGPATH": "/etc/opt/senzing",
-            "RESOURCEPATH": "/opt/senzing/g2/resources",
-            "SUPPORTPATH": "/opt/senzing/data"
-          },
-          "SQL": {
-            "BACKEND": "HYBRID",
-            "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
-          },
-          "C1": {
-            "CLUSTER_SIZE": "1",
-            "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
-          },
-          "C2": {
-            "CLUSTER_SIZE": "1",
-            "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
-          },
-          "HYBRID": {
-            "LIB_FEAT": "C2",
-            "LIB_FEAT_HKEY": "C2",
-            "RES_FEAT": "C1",
-            "RES_FEAT_EKEY": "C1",
-            "RES_FEAT_LKEY": "C1",
-            "RES_FEAT_STAT": "C1"
-          }
-        }
     Run:
       ApiServer: Yes
       Jupyter: No
@@ -226,6 +164,7 @@ Mappings:
       InputUrl: https://s3.amazonaws.com/public-read-access/TestDataSets/SenzingTruthSet/truth-set.json
       RecordMax: 102
       RecordMin: 0
+
 
   VpcCidrs:
     vpc:
@@ -752,6 +691,7 @@ Resources:
        - !Ref IamRoleStreamLoader
        - !Ref IamRoleStreamProducer
     Type: AWS::IAM::Policy
+
 
   IamPolicyTaskRunner:
     Properties:
@@ -2494,6 +2434,7 @@ Resources:
             - -allowedOrigins
             - '*'
             - -enableAdmin
+            - -skipStartupPerf
           Essential: true
           Image: public.ecr.aws/senzing/senzing-api-server:2.3.2
           LogConfiguration:
@@ -2862,7 +2803,34 @@ Resources:
             -
               Name: SENZING_ENGINE_CONFIGURATION_JSON
               Value: !Sub
-                - !Ref SenzingEngineConfiguration
+                - >-
+                  {
+                      "PIPELINE": {
+                          "CONFIGPATH": "/etc/opt/senzing",
+                          "RESOURCEPATH": "/opt/senzing/g2/resources",
+                          "SUPPORTPATH": "/opt/senzing/data"
+                      },
+                      "SQL": {
+                          "BACKEND": "HYBRID",
+                          "CONNECTION":"postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostCore}:${DatabasePortCore}:${DatabaseName}"
+                      },
+                      "C1": {
+                          "CLUSTER_SIZE": "1",
+                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostRes}:${DatabasePortRes}:${DatabaseName}"
+                      },
+                      "C2": {
+                          "CLUSTER_SIZE": "1",
+                          "DB_1": "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostLibfeat}:${DatabasePortLibfeat}:${DatabaseName}"
+                      },
+                      "HYBRID": {
+                          "LIB_FEAT": "C2",
+                          "LIB_FEAT_HKEY": "C2",
+                          "RES_FEAT": "C1",
+                          "RES_FEAT_EKEY": "C1",
+                          "RES_FEAT_LKEY": "C1",
+                          "RES_FEAT_STAT": "C1"
+                      }
+                  }
                 - DatabaseHostLibfeat: !GetAtt RdsDbClusterLibfeat.Endpoint.Address
                   DatabaseHostCore: !GetAtt RdsDbClusterCore.Endpoint.Address
                   DatabaseHostRes: !GetAtt RdsDbClusterRes.Endpoint.Address
