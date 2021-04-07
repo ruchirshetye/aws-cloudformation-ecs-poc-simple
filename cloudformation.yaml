@@ -21,9 +21,9 @@ Metadata:
     ParameterGroups:
       -
         Label:
-          default: Acknowledge insecure system
+          default: Data responsibiloity
         Parameters:
-          - AcknowledgeInsecureSystem
+          - AcknowledgeDataResponsibility
       -
         Label:
           default: Senzing installation
@@ -35,28 +35,31 @@ Metadata:
           default: Security
         Parameters:
           - CognitoAdminEmail
-          - CidrInbound
+          - Route53HostedZoneId
       -
         Label:
           default: Options
         Parameters:
           - RunStreamProducer
+          - CidrInbound
     ParameterLabels:
       AcceptEula:
         default: >-
           Required: If you accept the Senzing End User License Agreements at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
-      AcknowledgeInsecureSystem:
+      AcknowledgeDataResponsibility:
         default: >-
           A default deployment of this template is for public demonstration only.
           Before using authentic PII, ensure the security of your deployment.
           The security of this deployment is your responsibility.
           To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
       CidrInbound:
-        default: 'Required: Allowed inbound connections using CIDR notation.'
+        default: 'Optional: Allowed inbound connections using CIDR notation.'
       CognitoAdminEmail:
         default: 'Required: Email address for initial user.'
+      Route53HostedZoneId:
+        default: 'Optional: Specify a hosted zone.'
       RunStreamProducer:
         default: 'Optional: Would you like to have sample data imported?'
       SenzingLicenseAsBase64:
@@ -79,11 +82,11 @@ Parameters:
     Type: String
 
 
-  AcknowledgeInsecureSystem:
+  AcknowledgeDataResponsibility:
     AllowedPattern: '.+|^I AGREE$'
-    ConstraintDescription: AcknowledgeInsecureSystem parameter must be 'I AGREE'
+    ConstraintDescription: AcknowledgeDataResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#acknowledgeinsecuresystem'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#acknowledgedataresponsibility'
     Type: String
 
 
@@ -94,9 +97,16 @@ Parameters:
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cidrinbound'
     Type: String
 
+
   CognitoAdminEmail:
     Type: String
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cognitoadminemail'
+
+
+  Route53HostedZoneId:
+    Default: 'none'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#route53hostedzoneid'
+    Type: AWS::Route53::HostedZone::Id
 
 
   RunStreamProducer:
@@ -135,10 +145,10 @@ Rules:
         AssertDescription: 'EULA acceptance incorrect.  Enter "I_ACCEPT_THE_SENZING_EULA"'
 
 
-  ConfirmAcknowledgeInsecureSystem:
+  ConfirmAcknowledgeDataResponsibility:
     Assertions:
       - Assert: !Equals
-          - !Ref AcknowledgeInsecureSystem
+          - !Ref AcknowledgeDataResponsibility
           - 'I AGREE'
         AssertDescription: 'Entering "I AGREE" is required to proceed.'
 
@@ -195,6 +205,11 @@ Mappings:
 # -----------------------------------------------------------------------------
 
 Conditions:
+
+  IfRoute53HostedZoneId: !Not
+    - !Equals
+      - !Ref Route53HostedZoneId
+      - ''
 
   IfRunApiServer: !Equals
     - !FindInMap [Constants, Run, ApiServer]
@@ -889,6 +904,13 @@ Resources:
   LogsLogGroupLambdaCognitoCreateUser:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-cognito-create-user"
+    Type: AWS::Logs::LogGroup
+
+
+  LogsLogGroupLambdaFindDomainName:
+    Condition: IfRoute53HostedZoneId
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-lambda-find-domain-name"
     Type: AWS::Logs::LogGroup
 
 
@@ -1753,6 +1775,93 @@ Resources:
     Type: AWS::Lambda::Function
 
 
+  LambdaFunctionFindDomainName:
+    Condition: IfRoute53HostedZoneId
+    DependsOn:
+     - IamPolicyRoute53
+    Properties:
+      Code:
+        ZipFile: |
+          #!/usr/bin/env python3
+
+          import boto3
+          import cfnresponse
+          import datetime
+          import json
+          import logging
+          import traceback
+          from json import JSONEncoder
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          class DateTimeEncoder(JSONEncoder):
+              def default(self, obj):
+                  if isinstance(obj, (datetime.date, datetime.datetime)):
+                      return obj.isoformat()
+
+          def find_certificate_arn(certificate_domain_name, certificate_list):
+              certificate_summary_list = certificate_list.get('CertificateSummaryList', [])
+              for certificate_summary in certificate_summary_list:
+                  if certificate_summary.get('DomainName') == certificate_domain_name:
+                     return certificate_summary.get('CertificateArn')
+              return ""
+
+          def handler(event, context):
+              result = cfnresponse.SUCCESS
+              response = {}
+              try:
+                  logger.info("Event: {0}".format(json.dumps(event)))
+                  if event['RequestType'] in ['Create', 'Update']:
+                      properties = event.get('ResourceProperties', {})
+                      hosted_zone_id = properties.get('HostedZoneId', {})
+
+                      # Find domain in AWS Route53
+                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/route53.html
+
+                      route53 = boto3.client('route53')
+                      hosted_zone_dict = route53.get_hosted_zone(Id=hosted_zone_id)
+                      name = hosted_zone_dict.get("HostedZone", {}).get("Name", " ")
+                      response["Name"] = name
+                      response["DomainName"] = name[:-1]
+
+                      # Find Certificate in AWS Certificate Manager
+                      # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/acm.html
+
+                      certificate_domain_name = "*.{0}".format(response["DomainName"])
+                      logger.info("domain_name = {0}".format(certificate_domain_name))
+
+                      acm_client = boto3.client('acm')
+                      certificate_list = acm_client.list_certificates()
+                      certificate_arn = find_certificate_arn(certificate_domain_name, certificate_list)
+                      response["CertificateArn"] = certificate_arn
+                      logger.info("certificate_arn = {0}".format(certificate_arn))
+
+                      if not certificate_arn:
+                          logger.warning("Cannot find certificate for '{0}'".format(certificate_domain_name))
+                          result = cfnresponse.FAILED
+
+                  logger.info("Response: {0}".format(json.dumps(response, cls=DateTimeEncoder)))
+
+              except Exception as e:
+                  logger.error(e)
+                  traceback.print_exc()
+                  result = cfnresponse.FAILED
+              finally:
+                  cfnresponse.send(event, context, result, response)
+
+      Description: Gets Route53 hosted zone information.
+      FunctionName: !Sub "${AWS::StackName}-lambda-find-domain-name"
+      Handler: index.handler
+      Role: !GetAtt IamRoleLambda.Arn
+      Runtime: python3.8
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-find-domain-name"
+      Timeout: 30
+    Type: AWS::Lambda::Function
+
+
   LambdaFunctionGenerateCertificate:
     Properties:
       Code:
@@ -1763,7 +1872,7 @@ Resources:
       FunctionName: !Sub "${AWS::StackName}-lambda-generate-certificate"
       Handler: self_signed_certificate.handler
       Role: !GetAtt IamRoleLambda.Arn
-      Runtime: python3.8
+      Runtime: python3.6
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-generate-certificate"
@@ -1828,13 +1937,13 @@ Resources:
                   cfnresponse.send(event, context, result, response_data)
 
       Description: Generate Public/Private key pair.
-      FunctionName: !Sub "${AWS::StackName}-lambda-generate-certificate-XXX"
+      FunctionName: !Sub "${AWS::StackName}-lambda-generate-certificate-xxx"
       Handler: index.handler
       Role: !GetAtt IamRoleLambda.Arn
       Runtime: python3.8
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-generate-certificate-XXX"
+          Value: !Sub "${AWS::StackName}-lambda-generate-certificate-xxx"
       Timeout: 600
     Type: AWS::Lambda::Function
 
@@ -2221,6 +2330,18 @@ Resources:
     Type: Custom::LambdaRunnerDbPassword
 
 
+  LambdaRunnerFindDomainName:
+    Condition: IfRoute53HostedZoneId
+    Properties:
+      ClusterId: !Ref EcsCluster
+      HostedZoneId: !Ref Route53HostedZoneId
+      ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
+    Type: Custom::LambdaRunnerFindDomainName
+
+
   LambdaRunnerG2ConfigTool:
     DependsOn:
      - LambdaRunnerInitSenzing
@@ -2244,10 +2365,10 @@ Resources:
           - key: Name
             value: !Sub "${AWS::StackName}-lambda-runner-g2configtool-run-task-parameters"
         taskDefinition: !Ref EcsTaskDefinitionG2ConfigTool
+      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-lambda-runner-g2configtool"
-      ServiceToken: !GetAtt LambdaFunctionRunTaskAndWait.Arn
     Type: Custom::LambdaRunnerG2ConfigTool
 
 
@@ -2778,8 +2899,8 @@ Resources:
           RedirectConfig:
             Host: hub.senzing.com
             Path: /aws-cloudformation-ecs-poc-simple/
-            Protocol: HTTPS
             Port: '443'
+            Protocol: HTTPS
             StatusCode: HTTP_301
           Type: redirect
       LoadBalancerArn: !Ref LoadBalancerPublic
@@ -2923,6 +3044,28 @@ Resources:
       Priority: 3
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
 
+# -- Route53RecordSet ---------------------------------------------------------
+
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset.html
+
+  Route53RecordSet:
+    Condition: IfRoute53HostedZoneId
+    Properties:
+      AliasTarget:
+        DNSName: !Sub
+          - "dualstack.${LoadBalancerPublicDNSName}"
+          - LoadBalancerPublicDNSName: !GetAtt LoadBalancerPublic.DNSName
+        EvaluateTargetHealth: true
+        HostedZoneId: !GetAtt LoadBalancerPublic.CanonicalHostedZoneID
+      Comment: !Sub "${AWS::StackName} RecordSet"
+      HostedZoneId: !Ref Route53HostedZoneId
+      Name: !Sub
+        - "${StackName}.${DomainName}"
+        - StackName: !Ref AWS::StackName
+          DomainName: !GetAtt LambdaRunnerFindDomainName.Name
+      Type: A
+    Type: AWS::Route53::RecordSet
+
 # -- UserPool -----------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-userpool.html
@@ -2935,7 +3078,7 @@ Resources:
           EmailMessage: !Sub |
             <html>
             <p>
-                To log into https://${LoadBalancerPublic.DNSName},
+                To log into https://${LoadBalancerPublic.DNSName}/app,
                 use these credentials:
                 <ul>
                     <li><b>Username:</b>  {username}</li>
@@ -4166,7 +4309,7 @@ Resources:
      - ListenerRuleApiServer
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4204,7 +4347,7 @@ Resources:
      - ListenerRuleJupyter
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4318,7 +4461,7 @@ Resources:
      - ListenerRuleSwagger
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4351,7 +4494,7 @@ Resources:
      - ListenerRuleWebApp
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4385,7 +4528,7 @@ Resources:
      - ListenerRuleXterm
     Properties:
       Cluster: !Ref EcsCluster
-      DesiredCount: 2
+      DesiredCount: 1
       EnableECSManagedTags: true
       LaunchType: FARGATE
       LoadBalancers:
@@ -4507,6 +4650,13 @@ Resources:
 # -----------------------------------------------------------------------------
 
 Outputs:
+
+  0StartHere:
+    Condition: IfRunWebApp
+    Description: 'URL for Senzing Web App. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#0starthere'
+    Export:
+      Name: !Sub "${AWS::StackName}-start-here"
+    Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   AccountID:
     Description: 'The accountID'
@@ -4686,14 +4836,20 @@ Outputs:
       Name: !Sub "${AWS::StackName}-url-xterm"
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/xterm/"
 
-  WebInitPassword:
-    Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#webpassword'
+  UserInitPassword:
+    Description: 'One time password for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#userinitpassword'
     Export:
-      Name: !Sub "${AWS::StackName}-web-init-password"
+      Name: !Sub "${AWS::StackName}-user-init-password"
     Value: !GetAtt LambdaRunnerWebPassword.RandomPassword
 
-  WebUsername:
-    Description: 'Username for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#webusername'
+  UserName:
+    Description: 'Username for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#username'
     Export:
-      Name: !Sub "${AWS::StackName}-web-username"
+      Name: !Sub "${AWS::StackName}-user-name"
     Value: !Ref CognitoAdminEmail
+
+  UserPool:
+    Description: 'Username for web access. Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#userpool'
+    Export:
+      Name: !Sub "${AWS::StackName}-user-pool"
+    Value: !Sub "https://console.aws.amazon.com/cognito/users/#/pool/${UserPool}/users"
