@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-poc-simple Version: 0.5.3
+  Senzing aws-cloudformation-ecs-poc-simple Version: 0.6.0
   For more information see https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
 
 # -----------------------------------------------------------------------------
@@ -21,9 +21,9 @@ Metadata:
     ParameterGroups:
       -
         Label:
-          default: Data responsibility
+          default: Security responsibility
         Parameters:
-          - AcknowledgeDataResponsibility
+          - AcknowledgeSecurityResponsibility
       -
         Label:
           default: Senzing installation
@@ -48,7 +48,7 @@ Metadata:
           Required: If you accept the Senzing End User License Agreements at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
-      AcknowledgeDataResponsibility:
+      AcknowledgeSecurityResponsibility:
         default: >-
           A default deployment of this template is for public demonstration only.
           Before using authentic PII, ensure the security of your deployment.
@@ -82,11 +82,11 @@ Parameters:
     Type: String
 
 
-  AcknowledgeDataResponsibility:
+  AcknowledgeSecurityResponsibility:
     AllowedPattern: '.+|^I AGREE$'
-    ConstraintDescription: AcknowledgeDataResponsibility parameter must be 'I AGREE'
+    ConstraintDescription: AcknowledgeSecurityResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#acknowledgedataresponsibility'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#AcknowledgeSecurityResponsibility'
     Type: String
 
 
@@ -145,10 +145,10 @@ Rules:
         AssertDescription: 'EULA acceptance incorrect.  Enter "I_ACCEPT_THE_SENZING_EULA"'
 
 
-  ConfirmAcknowledgeDataResponsibility:
+  ConfirmAcknowledgeSecurityResponsibility:
     Assertions:
       - Assert: !Equals
-          - !Ref AcknowledgeDataResponsibility
+          - !Ref AcknowledgeSecurityResponsibility
           - 'I AGREE'
         AssertDescription: 'Entering "I AGREE" is required to proceed.'
 
@@ -2304,8 +2304,8 @@ Resources:
 
   LambdaRunnerGenerateCertificate:
     Properties:
-      CertificateAuthorityKeySize: 1024
-      CertificateKeySize: 1024
+      CertificateAuthorityKeySize: 2048
+      CertificateKeySize: 2048
       ClusterId: !Ref EcsCluster
       ServiceToken: !GetAtt LambdaFunctionGenerateCertificate.Arn
       Tags:
@@ -3006,21 +3006,34 @@ Resources:
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: true
         InviteMessageTemplate:
-          EmailMessage: !Sub |
-            <html>
-            <p>
-                To log into https://${LoadBalancerPublic.DNSName}/app,
-                use these credentials:
-                <ul>
-                    <li><b>Username:</b>  {username}</li>
-                    <li><b>OneTime Password:</b>  {####}</li>
-                </ul>
-            </p>
-            <p>
-                You will be prompted to change your password.
-                This one-time password is valid for three weeks.
-            </p>
-            </html>
+          EmailMessage: !Sub
+            - |
+              <html>
+              <p>
+                  To log into https://${LoadBalancerPublic.DNSName}/app,
+                  use these credentials:
+                  <ul>
+                      <li><b>Username:</b>  {username}</li>
+                      <li><b>OneTime Password:</b>  {####}</li>
+                  </ul>
+              </p>
+              <p>
+                  You will be prompted to change your password.
+                  This one-time password is valid for three weeks.
+              </p>
+              <p>
+                  Additional links:
+                  <ol>
+                      <li><b>Senzing API Server:</b> https://${LoadBalancerPublic.DNSName}/api/heartbeat</li>
+                      <li><b>Senzing HTTP REST API:</b> https://${LoadBalancerPublic.DNSName}/swagger</li>
+                      <li><b>Senzing XTerm:</b> https://${LoadBalancerPublic.DNSName}/xterm</li>
+                  </ol>
+              </p>
+              <p>
+                  For more information on this AWS Cloudformation, contact ${Contact}.
+              </p>
+              </html>
+            - Contact: !Ref CognitoAdminEmail
           EmailSubject: !Sub 'Temporary password for AWS ${AWS::StackName} stack'
           SMSMessage: 'Use the username {username} and the temporary password {####} to log in for the first time.'
       AutoVerifiedAttributes:
