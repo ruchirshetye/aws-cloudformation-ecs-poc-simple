@@ -174,7 +174,7 @@ Mappings:
       WebApp: Yes
       Xterm: Yes
     Senzing:
-      Version: senzingapi-2.4.1-21064
+      Version: senzingapi-2.4.2-21097
     Stack:
       Name: poc-simple
     StreamProducer:
@@ -3010,11 +3010,10 @@ Resources:
             - |
               <html>
               <p>
-                  To log into https://${LoadBalancerPublic.DNSName}/app,
-                  use these credentials:
+                  For first-time login to any of the links listed below, use these credentials:
                   <ul>
-                      <li><b>Username:</b>  {username}</li>
-                      <li><b>OneTime Password:</b>  {####}</li>
+                      <li><b>Username:</b> {username}</li>
+                      <li><b>OneTime Password:</b> {####}</li>
                   </ul>
               </p>
               <p>
@@ -3022,19 +3021,36 @@ Resources:
                   This one-time password is valid for three weeks.
               </p>
               <p>
-                  Additional links:
+                  <b>Links:</b>
                   <ol>
-                      <li><b>Senzing API Server:</b> https://${LoadBalancerPublic.DNSName}/api/heartbeat</li>
-                      <li><b>Senzing HTTP REST API:</b> https://${LoadBalancerPublic.DNSName}/swagger</li>
-                      <li><b>Senzing XTerm:</b> https://${LoadBalancerPublic.DNSName}/xterm</li>
+                      <li><b><a href="https://github.com/Senzing/entity-search-web-app">Senzing Entity Search web app</a>:</b> https://${Host}/app</li>
+                      <br />
+                      <li><b><a href="https://github.com/Senzing/senzing-api-server">Senzing API Server</a>:</b> https://${Host}/api/heartbeat</li>
+                      <br />
+                      <li><b><a href="https://github.com/Senzing/docker-xterm">Senzing XTerm</a>:</b> https://${Host}/xterm</li>
+                      <br />
+                      <li><b><a href="https://github.com/Senzing/senzing-rest-api-specification">Senzing HTTP REST API</a>:</b> https://${Host}/swagger
+                          <ul>
+                              <li><b>Servers:</b> <code>{protocol}://{host}:{port}{path}</code></li>
+                              <li><b>Server variables</b>:
+                                  <ol>
+                                      <li><b>protocol:</b> https</li>
+                                      <li><b>host:</b> ${Host}</li>
+                                      <li><b>port:</b> 443</li>
+                                      <li><b>path:</b> /api</li>
+                                  </ol>
+                              </li>
+                          </ul>
+                      </li>
                   </ol>
               </p>
               <p>
-                  For more information on this AWS Cloudformation, contact ${Contact}.
+                  For more information on the ${AWS::StackName} AWS Cloudformation, contact ${Contact}.
               </p>
               </html>
             - Contact: !Ref CognitoAdminEmail
-          EmailSubject: !Sub 'Temporary password for AWS ${AWS::StackName} stack'
+              Host: !GetAtt LoadBalancerPublic.DNSName
+          EmailSubject: !Sub 'Information for AWS Cloudformation ${AWS::StackName} stack'
           SMSMessage: 'Use the username {username} and the temporary password {####} to log in for the first time.'
       AutoVerifiedAttributes:
         - email
@@ -4504,7 +4520,7 @@ Resources:
   ApplicationAutoScalingScalableTargetApiServer:
     Properties:
       MaxCapacity: 200
-      MinCapacity: 2
+      MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceApiServer.Name}"
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
       ScalableDimension: ecs:service:DesiredCount
@@ -4534,7 +4550,7 @@ Resources:
   ApplicationAutoScalingScalableTargetWebApp:
     Properties:
       MaxCapacity: 200
-      MinCapacity: 2
+      MinCapacity: 1
       ResourceId: !Sub "service/${EcsCluster}/${EcsServiceWebApp.Name}"
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
       ScalableDimension: ecs:service:DesiredCount
@@ -4603,7 +4619,7 @@ Outputs:
     Value: !Sub "https://${LoadBalancerPublic.DNSName}/app/"
 
   AccountID:
-    Description: 'The accountID'
+    Description: 'The accountID Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#accountid'
     Export:
       Name: !Sub "${AWS::StackName}-account-id"
     Value: !Sub "${AWS::AccountId}"
