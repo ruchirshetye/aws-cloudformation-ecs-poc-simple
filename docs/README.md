@@ -16,21 +16,21 @@ The `aws-cloudformation-ecs-poc-simple` demonstration is an AWS Cloudformation t
     1. IAM Roles and Policies
     1. Logging
 1. AWS services
-    1. AWS Elastic File System (EFS)
-    1. AWS Simple Queue Service (SQS)
-    1. AWS Relational Data Service (RDS) Aurora Postgres Serverless
+    1. AWS Cognito
     1. AWS Elastic Container Service (ECS) Fargate
+    1. AWS Elastic File System (EFS)
+    1. AWS Relational Data Service (RDS) Aurora Postgres Serverless
+    1. AWS Simple Queue Service (SQS)
 1. Senzing services
-    1. Senzing Stream-Loader
-    1. Senzing Redoer
     1. Senzing API server
     1. Senzing Entity Search Web App
-1. Optional services:
-    1. SwaggerUI
-    1. Senzing Stream-producer
+    1. Senzing Redoer
     1. Senzing SSH access
+    1. Senzing Stream-Loader
     1. Senzing Xterm
-    1. AWS VPC Flow Logs
+    1. SwaggerUI
+1. Optional services:
+    1. Senzing Stream-producer
 
 The following diagram shows the relationship of the docker containers in this docker composition.
 Arrows represent data flow.
