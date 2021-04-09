@@ -35,7 +35,7 @@ Metadata:
           default: Security
         Parameters:
           - CognitoAdminEmail
-          - Route53HostedZoneId
+#         - Route53HostedZoneId
       -
         Label:
           default: Options
@@ -58,8 +58,8 @@ Metadata:
         default: 'Optional: Allowed inbound connections using CIDR notation.'
       CognitoAdminEmail:
         default: 'Required: Email address for initial user.'
-      Route53HostedZoneId:
-        default: 'Optional: Specify a hosted zone.'
+#     Route53HostedZoneId:
+#S      default: 'Optional: Specify a hosted zone.'
       RunStreamProducer:
         default: 'Optional: Would you like to have sample data imported?'
       SenzingLicenseAsBase64:
@@ -74,6 +74,8 @@ Metadata:
 
 Parameters:
 
+# AWS Console: https://console.aws.amazon.com/cloudformation/home?#/stacks > {stack} > Parameters
+
   AcceptEula:
     AllowedPattern: '.+|^I_ACCEPT_THE_SENZING_EULA$'
     ConstraintDescription: AcceptEula parameter must be 'I_ACCEPT_THE_SENZING_EULA'
@@ -86,7 +88,7 @@ Parameters:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: AcknowledgeSecurityResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#AcknowledgeSecurityResponsibility'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#acknowledgesecurityresponsibility'
     Type: String
 
 
@@ -103,10 +105,10 @@ Parameters:
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#cognitoadminemail'
 
 
-  Route53HostedZoneId:
-    Default: 'none'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs/senzing-demo-hosted-zone/#route53hostedzoneid'
-    Type: AWS::Route53::HostedZone::Id
+# Route53HostedZoneId:
+#   Default: ''
+#   Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#route53hostedzoneid'
+#   Type: AWS::Route53::HostedZone::Id
 
 
   RunStreamProducer:
@@ -204,10 +206,15 @@ Mappings:
 
 Conditions:
 
-  IfRoute53HostedZoneId: !Not
-    - !Equals
-      - !Ref Route53HostedZoneId
-      - ''
+# IfRoute53HostedZoneId: !Not
+#   - !Equals
+#     - !Ref Route53HostedZoneId
+#     - ''
+
+# FIXME:  Remove after Route53 is implemented.
+  IfRoute53HostedZoneId: !Equals
+      - 'temporarily'
+      - 'halt'
 
   IfRunApiServer: !Equals
     - !FindInMap [Constants, Run, ApiServer]
@@ -259,6 +266,7 @@ Resources:
 # -- Ssm -----------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ssm-parameter.html
+# AWS Console: https://console.aws.amazon.com/systems-manager/parameters > Search for {stack}
 
   SsmParameterSenzingEngineConfigurationJson:
     Properties:
@@ -307,6 +315,7 @@ Resources:
 # -- Iam -----------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
+# AWS Console: https://console.aws.amazon.com/iam/home?#/roles > Search for {stack}
 
   IamRoleApiServer:
     Properties:
@@ -638,6 +647,7 @@ Resources:
     Type: AWS::IAM::Role
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-policy.html
+# AWS Console: https://console.aws.amazon.com/iam/home?#/roles > Search for {stack} > {role} > inline policy
 
   IamPolicyCertificateManager:
     Properties:
@@ -874,6 +884,7 @@ Resources:
 # -- Logging ------------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-loggroup.html
+# AWS Console: https://console.aws.amazon.com/cloudwatch/home?#logsV2:log-groups > Search for {stack}
 
   LogsLogGroupDbClusterCore:
     Properties:
@@ -974,6 +985,7 @@ Resources:
 # -- Cloud, subnets, routing --------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#vpcs > Search for {stack}
 
   Ec2Vpc:
     Properties:
@@ -989,6 +1001,7 @@ Resources:
     Type: AWS::EC2::VPC
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#subnets > Search for {stack}
 
   Ec2SubnetPrivate1:
     Properties:
@@ -1058,6 +1071,7 @@ Resources:
     Type: AWS::EC2::Subnet
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#Addresses: > Search for {stack}
 
   Ec2Eip:
     Properties:
@@ -1068,6 +1082,7 @@ Resources:
     Type: AWS::EC2::EIP
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-natgateway.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#NatGateways: > Search for {stack}
 
   Ec2NatGateway:
     Properties:
@@ -1079,6 +1094,7 @@ Resources:
     Type: AWS::EC2::NatGateway
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups > Search for {stack}
 
   Ec2SecurityGroupInternal:
     Properties:
@@ -1265,6 +1281,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group-ingress.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#SecurityGroups: > Search for {stack}-ec2-security-group-alb-public > Inbound rules
 
   Ec2SecurityGroupIngressApiServerPublic:
     Condition: IfRunApiServer
@@ -1349,6 +1366,7 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#igws > Search for {stack}
 
   Ec2InternetGateway:
     Properties:
@@ -1358,6 +1376,7 @@ Resources:
     Type: AWS::EC2::InternetGateway
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-vpc-gateway-attachment.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#igws > Search for {stack} > State & VPI ID
 
   Ec2VpcGatewayAttachment:
     Properties:
@@ -1366,6 +1385,7 @@ Resources:
     Type: AWS::EC2::VPCGatewayAttachment
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route-table.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > Search for {stack}
 
   Ec2RouteTablePrivate:
     Properties:
@@ -1385,6 +1405,7 @@ Resources:
     Type: AWS::EC2::RouteTable
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Routes" tab
 
   Ec2RoutePrivate:
     Properties:
@@ -1404,6 +1425,7 @@ Resources:
     Type: AWS::EC2::Route
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet-route-table-assoc.html
+# AWS Console: https://console.aws.amazon.com/vpc/home?#RouteTables > {name} > "Subnet Associations" tab
 
   Ec2SubnetRouteTableAssociationPrivate1:
     Properties:
@@ -1435,6 +1457,7 @@ Resources:
 # -- Elastic File System ------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-efs-filesystem.html
+# AWS Console: https://console.aws.amazon.com/efs/home?#/filesystems > Search for {stack}
 
   EfsFileSystem:
     Properties:
@@ -1447,6 +1470,7 @@ Resources:
     Type: AWS::EFS::FileSystem
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-efs-mounttarget.html
+# AWS Console: https://console.aws.amazon.com/efs/home?#/filesystems > {name} > "Network" tab
 
   EfsMountTarget1:
     Properties:
@@ -1472,6 +1496,7 @@ Resources:
 # -- Database -----------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbsubnet-group.html
+# AWS Console: https://console.aws.amazon.com/rds/home#db-subnet-groups-list: > Search for {stack}
 
   RdsDbSubnetGroup:
     Properties:
@@ -1486,6 +1511,7 @@ Resources:
     Type: AWS::RDS::DBSubnetGroup
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbclusterparametergroup.html
+# AWS Console: https://console.aws.amazon.com/rds/home?#parameter-groups: > Search for {stack}
 
   RdsDbClusterParameterGroup:
     Properties:
@@ -1499,6 +1525,7 @@ Resources:
     Type: AWS::RDS::DBClusterParameterGroup
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbcluster.html
+# AWS Console: https://console.aws.amazon.com/rds/home?#databases: > Search for {stack}
 
   RdsDbClusterCore:
     DependsOn:
@@ -1625,6 +1652,7 @@ Resources:
 # -- Queue --------------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sqs-queues.html
+# AWS Console: https://console.aws.amazon.com/sqs/v2/home > Search on {stack}
 
   SqsQueue:
     Properties:
@@ -1679,6 +1707,7 @@ Resources:
 # -- ECS Cluster --------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-cluster.html
+# AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > Search for {stack}
 
   EcsCluster:
     Properties:
@@ -1691,6 +1720,7 @@ Resources:
 # -- HTTPS support ------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-servercertificate.html
+# AWS Console: https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers: > {name} > "Listeners" tab > "View/edit certificates"
 
   IamServerCertificate:
     Properties:
@@ -1705,6 +1735,7 @@ Resources:
 # -- LambdaFunction -----------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html
+# AWS Console: https://console.aws.amazon.com/lambda/home?#/functions > Search for {stack}
 
   LambdaFunctionCognitoCreateUser:
     DependsOn:
@@ -2235,6 +2266,7 @@ Resources:
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cfn-customresource.html
+# AWS Console: FIXME:  none?
 
   LambdaRunnerCognitoCreateUser:
     Properties:
@@ -2260,16 +2292,16 @@ Resources:
     Type: Custom::LambdaRunnerDbPassword
 
 
-  LambdaRunnerFindDomainName:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      ClusterId: !Ref EcsCluster
-      HostedZoneId: !Ref Route53HostedZoneId
-      ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
-    Type: Custom::LambdaRunnerFindDomainName
+# LambdaRunnerFindDomainName:
+#   Condition: IfRoute53HostedZoneId
+#   Properties:
+#     ClusterId: !Ref EcsCluster
+#     HostedZoneId: !Ref Route53HostedZoneId
+#     ServiceToken: !GetAtt LambdaFunctionFindDomainName.Arn
+#     Tags:
+#       - Key: Name
+#         Value: !Sub "${AWS::StackName}-lambda-runner-find-domain-name"
+#   Type: Custom::LambdaRunnerFindDomainName
 
 
   LambdaRunnerG2ConfigTool:
@@ -2592,6 +2624,7 @@ Resources:
 # -- Load balancing -----------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-loadbalancer.html
+# AWS Console: https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers: > Search for {stack}
 
   LoadBalancerPrivate:
     Properties:
@@ -2625,6 +2658,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-targetgroup.html
+# AWS Console: https://console.aws.amazon.com/ec2/v2/home?#TargetGroups: > Search for {stack}
 
   TargetGroupApiServerPrivate:
     Condition: IfRunApiServer
@@ -2638,6 +2672,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-api-server-private"
       Port: 8250
       Protocol: HTTP
       Tags:
@@ -2666,6 +2701,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-api-server-public"
       Port: 8250
       Protocol: HTTP
       Tags:
@@ -2694,6 +2730,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-jupyter"
       Port: 8888
       Protocol: HTTP
       Tags:
@@ -2730,7 +2767,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-swagger"
+      Name: !Sub "${AWS::StackName}-tg-swagger"
       Port: 8080
       Protocol: HTTP
       Tags:
@@ -2757,6 +2794,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
+      Name: !Sub "${AWS::StackName}-tg-web-app"
       Port: 8251
       Protocol: HTTP
       Tags:
@@ -2783,7 +2821,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-target-group-xterm"
+      Name: !Sub "${AWS::StackName}-tg-xterm"
       Port: 5000
       Protocol: HTTP
       Tags:
@@ -2808,6 +2846,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listener.html
+# AWS Console: https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers: > {name} > "Listeners" tab
 
   ListenerApiServerPrivate:
     Condition: IfRunApiServer
@@ -2840,6 +2879,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::Listener
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
+# AWS Console: https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers: > {name} > "Listeners" tab > "View/edit rules"
 
   ListenerRuleApiServer:
     Condition: IfRunApiServer
@@ -2978,28 +3018,30 @@ Resources:
 # -- Route53RecordSet ---------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset.html
+# AWS Console: https://console.aws.amazon.com/route53/v2/hostedzones# > {Domain name} > "Records" tab
 
-  Route53RecordSet:
-    Condition: IfRoute53HostedZoneId
-    Properties:
-      AliasTarget:
-        DNSName: !Sub
-          - "dualstack.${LoadBalancerPublicDNSName}"
-          - LoadBalancerPublicDNSName: !GetAtt LoadBalancerPublic.DNSName
-        EvaluateTargetHealth: true
-        HostedZoneId: !GetAtt LoadBalancerPublic.CanonicalHostedZoneID
-      Comment: !Sub "${AWS::StackName} RecordSet"
-      HostedZoneId: !Ref Route53HostedZoneId
-      Name: !Sub
-        - "${StackName}.${DomainName}"
-        - StackName: !Ref AWS::StackName
-          DomainName: !GetAtt LambdaRunnerFindDomainName.Name
-      Type: A
-    Type: AWS::Route53::RecordSet
+# Route53RecordSet:
+#   Condition: IfRoute53HostedZoneId
+#   Properties:
+#     AliasTarget:
+#       DNSName: !Sub
+#         - "dualstack.${LoadBalancerPublicDNSName}"
+#         - LoadBalancerPublicDNSName: !GetAtt LoadBalancerPublic.DNSName
+#       EvaluateTargetHealth: true
+#       HostedZoneId: !GetAtt LoadBalancerPublic.CanonicalHostedZoneID
+#     Comment: !Sub "${AWS::StackName} RecordSet"
+#     HostedZoneId: !Ref Route53HostedZoneId
+#     Name: !Sub
+#       - "${StackName}.${DomainName}"
+#       - StackName: !Ref AWS::StackName
+#         DomainName: !GetAtt LambdaRunnerFindDomainName.Name
+#     Type: A
+#   Type: AWS::Route53::RecordSet
 
 # -- UserPool -----------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-userpool.html
+# AWS Console: https://console.aws.amazon.com/cognito/users/#/pool/u > Search for {stack}
 
   UserPool:
     Properties:
@@ -3045,7 +3087,10 @@ Resources:
                   </ol>
               </p>
               <p>
-                  For more information on the ${AWS::StackName} AWS Cloudformation, contact ${Contact}.
+                  For more information on the ${AWS::StackName}
+                  <a href="https://github.com/Senzing/aws-cloudformation-ecs-poc-simple">Senzing simple proof-of-concept</a>
+                  AWS Cloudformation,
+                  contact ${Contact}.
               </p>
               </html>
             - Contact: !Ref CognitoAdminEmail
@@ -3070,6 +3115,7 @@ Resources:
 # -- UserPoolDomain -----------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-userpooldomain.html
+# AWS Console: https://console.aws.amazon.com/cognito/users/#/pool/u > Search for {stack} > "Domain name" tab
 
   UserPoolDomain: # Provides Cognito Login Page
     Properties:
@@ -3080,6 +3126,7 @@ Resources:
 # -- UserPoolClient -----------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-userpoolclient.html
+# AWS Console: https://console.aws.amazon.com/cognito/users/#/pool/u > Search for {stack} > "App client settings" tab
 
   UserPoolClient:
     Properties:
@@ -3099,6 +3146,7 @@ Resources:
 # -- EcsTaskDefinition --------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html
+# AWS Console: https://console.aws.amazon.com/ecs/home?#/taskDefinitions > Search for {stack}
 
   EcsTaskDefinitionApiServer:
     Properties:
@@ -4260,6 +4308,7 @@ Resources:
 # -- EcsService ---------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
+# AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > {stack}-cluster > "Services" tab
 
   EcsServiceApiServer:
     Condition: IfRunApiServer
@@ -4516,6 +4565,7 @@ Resources:
 # -- AutoScaling --------------------------------------------------------------
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-applicationautoscaling-scalabletarget.html
+# AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > {stack}-cluster > {Service Name} > "Auto Scaling" tab
 
   ApplicationAutoScalingScalableTargetApiServer:
     Properties:
@@ -4562,6 +4612,7 @@ Resources:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-applicationautoscaling-scalingpolicy.html
+# AWS Console: https://console.aws.amazon.com/ecs/home?#/clusters > {stack}-cluster > {Service Name} > "Auto Scaling" tab
 
   ApplicationAutoScalingScalingPolicyApiServer:
     Properties:
@@ -4610,6 +4661,8 @@ Resources:
 # -----------------------------------------------------------------------------
 
 Outputs:
+
+# AWS Console: https://console.aws.amazon.com/cloudformation/home?#/stacks > {stack} > Outputs
 
   0penFirst:
     Condition: IfRunWebApp

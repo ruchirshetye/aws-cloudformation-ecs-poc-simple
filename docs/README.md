@@ -16,21 +16,21 @@ The `aws-cloudformation-ecs-poc-simple` demonstration is an AWS Cloudformation t
     1. IAM Roles and Policies
     1. Logging
 1. AWS services
-    1. AWS Elastic File System (EFS)
-    1. AWS Simple Queue Service (SQS)
-    1. AWS Relational Data Service (RDS) Aurora Postgres Serverless
+    1. AWS Cognito
     1. AWS Elastic Container Service (ECS) Fargate
+    1. AWS Elastic File System (EFS)
+    1. AWS Relational Data Service (RDS) Aurora Postgres Serverless
+    1. AWS Simple Queue Service (SQS)
 1. Senzing services
-    1. Senzing Stream-Loader
-    1. Senzing Redoer
     1. Senzing API server
     1. Senzing Entity Search Web App
-1. Optional services:
-    1. SwaggerUI
-    1. Senzing Stream-producer
+    1. Senzing Redoer
     1. Senzing SSH access
+    1. Senzing Stream-Loader
     1. Senzing Xterm
-    1. AWS VPC Flow Logs
+    1. SwaggerUI
+1. Optional services:
+    1. Senzing Stream-producer
 
 The following diagram shows the relationship of the docker containers in this docker composition.
 Arrows represent data flow.
@@ -120,6 +120,8 @@ template can be see in the [AWS Management Console](https://console.aws.amazon.c
     1. [Stacks](https://console.aws.amazon.com/cloudformation/home?#/stacks)
 1. CloudWatch
     1. [Log groups](https://console.aws.amazon.com/cloudwatch/home?#logsV2:log-groups)
+1. Cognito
+    1. [UserPool](https://console.aws.amazon.com/cognito/users/#/pool/u)
 1. Elastic Compute Cloud (EC2)
     1. [Load Balancers](https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers:)
     1. [Network interfaces](https://console.aws.amazon.com/ec2/v2/home?#NIC)
@@ -130,6 +132,7 @@ template can be see in the [AWS Management Console](https://console.aws.amazon.c
 1. Elastic File System (EFS)
     1. [File systems](https://console.aws.amazon.com/efs/home?#/filesystems)
 1. Identity and Access Management (IAM)
+    1. Certificates
     1. [Policies](https://console.aws.amazon.com/iam/home?#/policies)
     1. [Roles](https://console.aws.amazon.com/iam/home?#/roles)
 1. Lambda
@@ -138,8 +141,12 @@ template can be see in the [AWS Management Console](https://console.aws.amazon.c
     1. [Databases](https://console.aws.amazon.com/rds/home?#databases:)
     1. [Parameter groups](https://console.aws.amazon.com/rds/home?#parameter-groups:)
     1. [Subnet groups](https://console.aws.amazon.com/rds/home?#db-subnet-groups-list:)
+1. Route53
+    1. [RecordSet](https://console.aws.amazon.com/route53/v2/hostedzones#)
 1. Simple Queue Service (SQS)
     1. [Queues](https://console.aws.amazon.com/sqs/v2/home)
+1. System Manager Agent (SSM)
+    1. [Parameter store](https://console.aws.amazon.com/systems-manager/parameters)
 1. Virtual Private Cloud (VPC)
     1. [Elastic IP addresses](https://console.aws.amazon.com/vpc/home?#Addresses:)
     1. [Endpoints](https://console.aws.amazon.com/vpc/home?#Endpoints:)
@@ -174,16 +181,17 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_accept_eula).
 1. **Default:** None
 
-### AcknowledgeInsecureSystem
+### AcknowledgeSecurityResponsibility
 
 1. **Synopsis:**
-   To reduce the need for heavy-handed AWS administration for this simple proof-of-concept,
-   the default deployment of this CloudFormation doesn't configure:
-    1. HTTPS
-    1. User authentication
+   The Senzing proof-of-concept AWS Cloudformation uses
+   [AWS Cognito](https://aws.amazon.com/cognito/) for authentication,
+   and HTTPS (using a self-signed certificate) for encrypted network traffic
+   to expose services through a single, internet-facing AWS Elastic Load Balancer.
+   With exception of the
+   [senzing/sshd](https://github.com/Senzing/docker-sshd) container,
+   no tasks in the AWS Elastic Container Service (ECS) have public IP addresses.
 
-   In other words, the endpoint are open to the public and the traffic across the network is not encrypted.
-   For this reason, it is the user's responsibility to avoid putting sensitive data into the default deployment.
    To enable additional security measures for the deployment in your specific environment,
    you'll need to consult with your AWS administrator.
 1. **Required:** Yes
@@ -194,13 +202,55 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 ### CidrInbound
 
-1. **Synopsis:** The password used to access the AWS Aurora Postgres Serverless databases.
+1. **Synopsis:** A Classless Inter-Domain Routing (CIDR) value used to limit access to the system.
+   Examples:
+    1. A system with the value `0.0.0.0/0` allows access from anywhere.
+    1. A system with the value `45.26.129.0/24` will allow access from IP addresses in the range `45.26.129.0` to `45.26.129.255`
+    1. A system with the value `45.26.129.200/32` will allow access from a single IP address `45.26.129.200`.
 1. **Required:** Yes
 1. **Type:** String
 1. **Allowed pattern:** Letters and numbers. Specifically: `'(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'`
 1. **Allowed values:** String in IPv4 [CIDR format](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing).
 1. **Example:** 45.26.129.200/32
 1. **Default:** 0.0.0.0/0
+
+### CognitoAdminEmail
+
+1. **Synopsis:**
+   An email address of the person administrating this Cloudformation.
+   The email address will be used when email is sent to additional users via the
+   [AWS Cognito web console](https://console.aws.amazon.com/cognito/users/#/pool/u).
+1. **Required:** Yes
+1. **Type:** String
+1. **Allowed values:**
+    1. A string in email format.
+    1. Example: `me@example.com`
+
+### Route53HostedZoneId
+
+1. **Synopsis:**
+   An existing [AWS Route53 hosted zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/route-53-concepts.html#route-53-concepts-hosted-zone)
+   to use when creating a hostname having the format:
+   `{stack-name}.{hosted-zone-domain-name}`.
+   To see available Hosted Zones, visit the
+   [AWS Route53 Hosted Zone console](https://console.aws.amazon.com/route53/v2/hostedzones#).
+1. **Required:** No
+1. **Type:** HostedZoneId
+1. **Default:** If no hosted zone is selected, a self-signed certificate will be created to support HTTPS over the AWS Elastic Load Balancer.
+
+### RunStreamProducer
+
+1. **Synopsis:**
+   Specify if example data should be loaded into the system during deployment.
+   The data loaded is called the
+   "[Senzing Synthetic Truth Set](https://senzing.zendesk.com/hc/en-us/articles/360047940434-Synthetic-Truth-Sets)".
+   If a system without example data (i.e. a "clean" system) is desired, choose "No".
+1. **Required:** Yes
+1. **Type:** Choice
+1. **Allowed values:**
+    1. Yes
+    1. No
+1. **Default:** Yes
 
 ### SenzingLicenseAsBase64
 
@@ -248,29 +298,42 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 ## Outputs
 
-### ApiServerHeartbeatUrl
+### AccountID
 
-1. See [UrlApiServerHeartbeat](#urlapiserverheartbeat)
+1. **Synopsis:**
+   The AWS account ID used to create the AWS Cloudformation.
+
+### CertificateArn
+
+1. **Synopsis:**
+   The Amazon Resource Name (ARN) of the certificate used to enable HTTPS.
 
 ### DatabaseHostCore
 
 1. **Synopsis:**
+   One of 3 Senzing database servers that hold the Senzing Model.
+1. **Details:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabaseHostLibfeat
 
 1. **Synopsis:**
+   Two of 3 Senzing database servers that hold the Senzing Model.
+1. **Details:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home)
 
 ### DatabaseHostRes
 
 1. **Synopsis:**
+   Three of 3 Senzing database servers that hold the Senzing Model.
+1. **Details:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home)
 
 ### DatabaseName
 
 1. **Synopsis:**
    The name of the database.
+   It is same name across all 3 database servers.
 1. **Details:**
    Usually "G2".
 
@@ -320,9 +383,13 @@ Technical information on AWS Cloudformation parameters can be seen at
    More information at [AWS Load Balancers console](https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers:).
    Also used as the `host` value when using [UrlSwagger](#urlswagger).
 
-### JupyterUrl
+### OpenFirst
 
-1. See [UrlJupyter](#urljupyter)
+1. **Synopsis:**
+   An alias for [UrlWebApp](#urlwebapp).
+   Since it's one of the first things to look at, it is listed first.
+1. **Details:**
+   It is listed first because the name "cheats" and uses a zero instead of a capital "o".
 
 ### Queue
 
@@ -336,9 +403,23 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 1. **Synopsis:**
    The queue to which records that are not able to be ingested into Senzing Engine are sent.
-   In otherwords, if the JSON message is malformed, or Senzing d into the Senzing Engine.
+   In otherwords, if the JSON message is malformed, or Senzing denied inserting into the Senzing Engine.
 1. **Details:**
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
+
+### QueueInfo
+
+1. **Synopsis:**
+   The queue that is populated with responses from inserting records into the Senzing Engine.
+   This is commonly calls "WithInfo" information.
+1. **Details:**
+   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
+
+### SenzingVersion
+
+1. **Synopsis:**
+   The [Senzing version](https://senzing.com/releases/)
+   installed during the deployment.
 
 ### SshPassword
 
@@ -351,6 +432,22 @@ Technical information on AWS Cloudformation parameters can be seen at
    The username to be used with the sshd tasks.
 1. **Details:**
    Usually "root".
+
+### SubnetPrivate1
+
+1. **Synopsis:**
+   The first of two private subnets created.
+1. **Details:**
+   See the subnet having a Name in the form `{StackName}-ec2-subnet-private-1` in the
+   [AWS Virtual Private Cloud console](https://console.aws.amazon.com/vpc/home?#subnets:).
+
+### SubnetPrivate2
+
+1. **Synopsis:**
+   The second of two private subnets created.
+1. **Details:**
+   See the subnet having a Name in the form `{StackName}-ec2-subnet-private-2` in the
+   [AWS Virtual Private Cloud console](https://console.aws.amazon.com/vpc/home?#subnets:).
 
 ### SubnetPublic1
 
@@ -368,9 +465,12 @@ Technical information on AWS Cloudformation parameters can be seen at
    See the subnet having a Name in the form `{StackName}-ec2-subnet-public-2` in the
    [AWS Virtual Private Cloud console](https://console.aws.amazon.com/vpc/home?#subnets:).
 
-### SwaggerUrl
+### UrlApiServer
 
-1. See [UrlSwagger](#urlswagger)
+1. **Synopsis:**
+   A URL showing how to reach the
+   [Senzing API Server](https://github.com/Senzing/senzing-api-server)
+   directly.
 
 ### UrlApiServerHeartbeat
 
@@ -379,9 +479,6 @@ Technical information on AWS Cloudformation parameters can be seen at
    [Senzing API Server](https://github.com/Senzing/senzing-api-server)
    directly.
    The `/heartbeat` URI path simply demonstrates that the API server is responding.
-1. **Details:**
-   For more URIs, see
-   [UrlSwagger output value](#urlswagger).
 
 ### UrlJupyter
 
@@ -398,8 +495,11 @@ Technical information on AWS Cloudformation parameters can be seen at
    To access the Senzing API server
     1. Using the URL, visit the `UrlSwagger` webpage.
     1. In **Servers**
-        1. From the drop-down, select `{protocol}://{host}:{port}`.
-        1. In the **Host** field, enter the value of [Host](#host).
+        1. From the drop-down, select `{protocol}://{host}:{port}{path}`.
+        1. **protocol:** https
+        1. **host:** Enter the value of [Host](#host)
+        1. **port:** 443
+        1. **path:** /api
     1. The HTTP URIs will now access the deployed Senzing API server.
 
 ### UrlWebApp
@@ -417,10 +517,24 @@ Technical information on AWS Cloudformation parameters can be seen at
    From this Linux terminal, `G2Command.py`, `G2Explorer.py`, `G2ConfigTool.py`,
    can be run.
 
-### WebAppUrl
+### UserInitPassword
 
-1. See [UrlWebApp](#urlwebapp)
+1. **Synopsis:**
+   The one-time password for the [UserName](#username).
+1. **Details:**
+   When the one-time password is used, the user is prompted for a new password.
+   Once a new password is submitted, the one-time password has no value.
 
-### XtermUrl
+### UserName
 
-1. See [UrlXterm](#urlxterm)
+1. **Synopsis:**
+   The user name submitted for the [CognitoAdminEmail](#cognitoadminemail).
+   It is the initial user created to access the system.
+1. **Details:**
+   To add users, see [UserPool](#userpool)
+
+### UserPool
+
+1. **Synopsis:**
+   The specific [UserPool](https://console.aws.amazon.com/cognito/users/#/pool/u) URL.
+   It can be used to add, manage, or delete users for this Cloudformation.
