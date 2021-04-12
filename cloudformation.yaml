@@ -2643,6 +2643,8 @@ Resources:
 
 
   LoadBalancerPublic:
+    DependsOn:
+      IamServerCertificate
     Properties:
       Name: !Sub "${AWS::StackName}-alb-public"
       Scheme: internet-facing
@@ -3087,8 +3089,9 @@ Resources:
                   </ol>
               </p>
               <p>
-                  For more information on the ${AWS::StackName}
+                  For more information on the
                   <a href="https://github.com/Senzing/aws-cloudformation-ecs-poc-simple">Senzing simple proof-of-concept</a>
+                  "${AWS::StackName}"
                   AWS Cloudformation,
                   contact ${Contact}.
               </p>
