@@ -98,8 +98,13 @@ describing where we can improve.   Now on with the show...
         1. Enter an identifier of your choosing.
            Example: "senzing-poc"
     1. In **Parameters**
+        1. In **Security responsibility**
+            1. Understand the nature of the security in the deployment.
+            1. Once understood, enter "I AGREE".
         1. In **Senzing installation**
             1. Accept the End User Licence Agreement
+        1. In **Security**
+            1. Enter your email address.  Example: `me@example.com`
     1. Other parameters are optional.
     1. In lower-right, click "Next" button.
 1. In **Configure stack options**
@@ -194,6 +199,13 @@ Technical information on AWS Cloudformation parameters can be seen at
 
    To enable additional security measures for the deployment in your specific environment,
    you'll need to consult with your AWS administrator.
+   Examples of additional security measures:
+    - [AWS Web Application Firewall (WAF)](https://aws.amazon.com/waf/)
+    - [AWS Shield](https://aws.amazon.com/shield/)
+    - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/)
+    - [Amazon API Gateway](https://aws.amazon.com/api-gateway/)
+    - Non-self-signed X.509 Certificate
+    - Restrictive CIDRs
 1. **Required:** Yes
 1. **Type:** String
 1. **Allowed values:**

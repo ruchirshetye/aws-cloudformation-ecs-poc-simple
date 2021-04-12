@@ -6,19 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.0] - 2021-04-08
+## [0.6.0] - 2021-04-12
 
 ### Added in 0.6.0
 
+- Use of HTTPS protocol
+  - Generation of self-signed certificate to support HTTPS access
+- Use of AWS Cognito for authentication
+- Route-based URLs to services.  Replacing port-based routing.
+- Added comments in cloudformation.yaml for AWS Console locations
+
 ### Changed in 0.6.0
 
-## [0.5.2] - 2021-03-30
-
-### Changed in 0.5.2
-
 - Refactored `SENZING_ENGINE_CONFIGURATION_JSON` into SSM parameter.
+- Updated to `senzingapi-2.4.2-21097`
 - Updated docker image versions:
-  - public.ecr.aws/senzing/entity-search-web-app:2.2.2
+  - public.ecr.aws/senzing/entity-search-web-app:2.2.3
   - public.ecr.aws/senzing/init-container:1.6.9
   - public.ecr.aws/senzing/senzing-api-server:2.5.0
   - public.ecr.aws/senzing/stream-loader:1.7.3
