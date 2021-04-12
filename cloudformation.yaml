@@ -45,7 +45,7 @@ Metadata:
     ParameterLabels:
       AcceptEula:
         default: >-
-          Required: If you accept the Senzing End User License Agreements at
+          Required: If you accept the Senzing End User License Agreement at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
       AcknowledgeSecurityResponsibility:
