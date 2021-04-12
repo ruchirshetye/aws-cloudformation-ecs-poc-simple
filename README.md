@@ -20,7 +20,6 @@ Detailed instructions at
             1. Accept the End User Licence Agreement
         1. In **Security**
             1. Enter your email address.  Example: `me@example.com`
-            1. If one or more hosted zones appear in the list, choose one.
     1. Other parameters are optional.
     1. In lower-right, click "Next" button.
 1. In **Configure stack options**
