@@ -98,8 +98,13 @@ describing where we can improve.   Now on with the show...
         1. Enter an identifier of your choosing.
            Example: "senzing-poc"
     1. In **Parameters**
+        1. In **Security responsibility**
+            1. Understand the nature of the security in the deployment.
+            1. Once understood, enter "I AGREE".
         1. In **Senzing installation**
             1. Accept the End User Licence Agreement
+        1. In **Security**
+            1. Enter your email address.  Example: `me@example.com`
     1. Other parameters are optional.
     1. In lower-right, click "Next" button.
 1. In **Configure stack options**
