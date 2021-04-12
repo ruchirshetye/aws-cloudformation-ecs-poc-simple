@@ -7,7 +7,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #     aws cloudformation validate-template: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cloudformation/validate-template.html
 
 Description: >-
-  Senzing aws-cloudformation-ecs-poc-simple Version: 0.6.0
+  Senzing aws-cloudformation-ecs-poc-simple Version: 0.6.1
   For more information see https://github.com/Senzing/aws-cloudformation-ecs-poc-simple
 
 # -----------------------------------------------------------------------------
@@ -2674,7 +2674,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-tg-api-server-private"
+      Name: !Sub "${AWS::StackName}-tg-api-private"
       Port: 8250
       Protocol: HTTP
       Tags:
@@ -2703,7 +2703,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-tg-api-server-public"
+      Name: !Sub "${AWS::StackName}-tg-api-public"
       Port: 8250
       Protocol: HTTP
       Tags:
