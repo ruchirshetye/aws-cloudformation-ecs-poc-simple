@@ -200,12 +200,12 @@ Technical information on AWS Cloudformation parameters can be seen at
    To enable additional security measures for the deployment in your specific environment,
    you'll need to consult with your AWS administrator.
    Examples of additional security measures:
+    - [AWS Route53](https://aws.amazon.com/route53/) with genuine X.509 certificate
     - [AWS Web Application Firewall (WAF)](https://aws.amazon.com/waf/)
     - [AWS Shield](https://aws.amazon.com/shield/)
     - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/)
     - [Amazon API Gateway](https://aws.amazon.com/api-gateway/)
-    - Non-self-signed X.509 Certificate
-    - Restrictive CIDRs
+    - Restrictive value for [CidrInbound](#cidrinbound)
 1. **Required:** Yes
 1. **Type:** String
 1. **Allowed values:**
@@ -215,6 +215,7 @@ Technical information on AWS Cloudformation parameters can be seen at
 ### CidrInbound
 
 1. **Synopsis:** A Classless Inter-Domain Routing (CIDR) value used to limit access to the system.
+   This restricts the inbound traffic to requests from specified IP ranges.
    Examples:
     1. A system with the value `0.0.0.0/0` allows access from anywhere.
     1. A system with the value `45.26.129.0/24` will allow access from IP addresses in the range `45.26.129.0` to `45.26.129.255`
