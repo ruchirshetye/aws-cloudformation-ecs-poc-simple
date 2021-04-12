@@ -194,6 +194,13 @@ Technical information on AWS Cloudformation parameters can be seen at
 
    To enable additional security measures for the deployment in your specific environment,
    you'll need to consult with your AWS administrator.
+   Examples of additional security measures:
+    - [AWS Web Application Firewall (WAF)](https://aws.amazon.com/waf/)
+    - [AWS Shield](https://aws.amazon.com/shield/)
+    - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/)
+    - [Amazon API Gateway](https://aws.amazon.com/api-gateway/)
+    - Non-self-signed X.509 Certificate
+    - Restrictive CIDRs
 1. **Required:** Yes
 1. **Type:** String
 1. **Allowed values:**
