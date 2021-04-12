@@ -2674,7 +2674,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-tg-api-server-private"
+      Name: !Sub "${AWS::StackName}-tg-api-private"
       Port: 8250
       Protocol: HTTP
       Tags:
@@ -2703,7 +2703,7 @@ Resources:
       HealthyThresholdCount: 2
       Matcher:
         HttpCode: 200-299
-      Name: !Sub "${AWS::StackName}-tg-api-server-public"
+      Name: !Sub "${AWS::StackName}-tg-api-public"
       Port: 8250
       Protocol: HTTP
       Tags:
