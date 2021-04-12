@@ -38,7 +38,7 @@ Detailed instructions at
     1. May have to hit the refresh button a few times to get updated information.
 1. Click on "senzing-poc" stack
 1. Click on "Outputs" tab
-1. Click on "WebAppUrl" value
+1. Click on "0penFirst" value
 
 ## Behind the scenes
 
@@ -46,8 +46,8 @@ Detailed instructions at
 
 1. Provisions:
     1. AWS infrastructure: VPC, subnets, Internet Gateway, Routes, IAM Roles and Policies, Logging
-    1. AWS: EFS, 3 SQS queues, 3 AWS Aurora Postgres Serverless databases, ECS
-    1. Senzing: Stream-loader (with autoscale), Redoer, API Server, Entity Search Web App
+    1. AWS: EFS, 3 SQS queues, 3 AWS Aurora Postgres Serverless databases, ECS, Cognito
+    1. Senzing: Stream-loader, Redoer, API Server, Entity Search Web App
 
 ### What is not supported
 
