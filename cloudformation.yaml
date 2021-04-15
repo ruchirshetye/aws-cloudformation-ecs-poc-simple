@@ -2594,6 +2594,7 @@ Resources:
   LambdaRunnerStreamProducer:
     Condition: IfRunStreamProducer
     DependsOn:
+     - LambdaRunnerG2ConfigTool
      - LambdaRunnerWaitForEfsMountTarget1
      - LambdaRunnerWaitForEfsMountTarget2
      - SqsInput
