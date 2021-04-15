@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added in 0.6.2
 
+- Last version to support senzingapi-2.4.x and below
+  - using senzingdata-v1
 - An SQS queue for redo records.
 - Multiple "redo-loaders" reading from the redo queue.
 
