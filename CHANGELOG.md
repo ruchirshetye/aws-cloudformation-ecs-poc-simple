@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 0.7.0
 
+- Updated to `senzingapi-2.5.0-21104`
 - Migrate from senzingdata-v1 to senzingdata-v2
   - Required by senzingapi-2.5.0
 
