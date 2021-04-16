@@ -6,10 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2021-04-16
+
+### Changed in 0.7.0
+
+- Updated to `senzingapi-2.5.0-21104`
+- Migrate from senzingdata-v1 to senzingdata-v2
+  - Required by senzingapi-2.5.0
+- Updated docker image versions:
+  - public.ecr.aws/senzing/stream-loader:1.7.5
+
 ## [0.6.2] - 2021-04-15
 
 ### Added in 0.6.2
 
+- Last version to support senzingapi-2.4.x and below
+  - using senzingdata-v1
 - An SQS queue for redo records.
 - Multiple "redo-loaders" reading from the redo queue.
 
