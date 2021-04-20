@@ -1932,7 +1932,7 @@ Resources:
     Properties:
       Code:
         # This code can be seen at https://github.com/Senzing/aws-lambda-self-signed-certificate
-        S3Bucket: public-read-access
+        S3Bucket: !Sub "senzing-public-${AWS::Region}"
         S3Key: aws-lambda-self-signed-certificate/self-signed-certificate.zip
       Description: Generate Public/Private key pair.
       FunctionName: !Sub "${AWS::StackName}-lambda-generate-certificate"
