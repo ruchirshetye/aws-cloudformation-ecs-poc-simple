@@ -40,6 +40,12 @@ Detailed instructions at
 1. Click on "Outputs" tab
 1. Click on "0penFirst" value
 
+## Additional topics
+
+1. [How to load AWS Cloudformation queue](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/load-aws-cloudformation-queue.md)
+1. [How to set AWS RDS force-scaling-capacity](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/set-aws-rds-force-scaling-capacity.md)
+1. [How to migrate Senzing in AWS Cloudformation](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/migrate-senzing-in-cloudformation.md)
+
 ## Behind the scenes
 
 ### What Cloudformation does
