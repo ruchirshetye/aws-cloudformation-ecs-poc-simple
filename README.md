@@ -21,7 +21,7 @@ Detailed instructions at
             1. Understand the nature of the security in the deployment.
             1. Once understood, enter "I AGREE".
         1. In **Senzing installation**
-            1. Accept the End User Licence Agreement
+            1. Accept the End User License Agreement
         1. In **Security**
             1. Enter your email address.  Example: `me@example.com`
     1. Other parameters are optional.
@@ -59,6 +59,7 @@ to draw attention to this AWS Cloudformation defect.
 1. [How to load AWS Cloudformation queue](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/load-aws-cloudformation-queue.md)
 1. [How to set AWS RDS force-scaling-capacity](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/set-aws-rds-force-scaling-capacity.md)
 1. [How to migrate Senzing in AWS Cloudformation](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/migrate-senzing-in-cloudformation.md)
+1. [How to update Senzing license](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/update-senzing-license.md)
 
 ## Behind the scenes
 
