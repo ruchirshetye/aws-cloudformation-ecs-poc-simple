@@ -57,6 +57,9 @@ GitHub repository for
     1. [Legend](#legend)
 1. [Expectations](#expectations)
 1. [Demonstrate using AWS Console](#demonstrate-using-aws-console)
+1. [A Hack](#a-hack)
+1. [Using deployment](#using-deployment)
+1. [Additional topics](#additional-topics)
 1. [Parameters](#parameters)
 1. [Outputs](#outputs)
 
@@ -91,6 +94,10 @@ describing where we can improve.   Now on with the show...
 
 ### Launch AWS Cloudformation
 
+1. :thinking: **Warning:** This Cloudformation deployment will accrue AWS costs.
+   With appropriate permissions, the
+   [AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/)
+   can help evaluate costs.
 1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-poc-simple/cloudformation.yaml)
 1. In lower-right, click on "Next" button.
 1. In **Specify stack details**
@@ -106,6 +113,7 @@ describing where we can improve.   Now on with the show...
         1. In **Security**
             1. Enter your email address.  Example: `me@example.com`
     1. Other parameters are optional.
+       The default values are fine.
     1. In lower-right, click "Next" button.
 1. In **Configure stack options**
     1. In lower-right, click "Next" button.
@@ -113,7 +121,36 @@ describing where we can improve.   Now on with the show...
     1. Near the bottom, in **Capabilities**
         1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
     1. In lower-right, click "Create stack" button.
-1. Senzing formation takes about 15 minutes to fully deploy.
+
+## A Hack
+
+Unfortunately, the AWS Cloudformation template does not support a particular parameter
+for the AWS Aurora Postgres Serverless database that is needed in this stack.
+To work around this limitation, see
+[How to set AWS RDS force-scaling-capacity](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/set-aws-rds-force-scaling-capacity.md).
+If possible, add a "thumbs" up to
+[AWS Cloudformation issue #298](https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298)
+to draw attention to this AWS Cloudformation defect.
+
+## Using deployment
+
+1. Visit [AWS CloudFormation console](https://console.aws.amazon.com/cloudformation/home).
+    1. Make sure correct AWS region is selected.
+1. Wait until "{stack-name}" status is `CREATE_COMPLETE`.
+    1. Senzing formation takes about 20 minutes to fully deploy.
+    1. May have to hit the refresh button a few times to get updated information.
+1. Click on "{stack-name}" stack.
+1. Click on "Outputs" tab.
+1. Click on "0penFirst" value.
+    1. You will be prompted for username and password,
+       Use the `UserName` and `UserInitPassword` values found in the "Outputs" tab.
+
+## Additional topics
+
+1. [How to set AWS RDS force-scaling-capacity](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/set-aws-rds-force-scaling-capacity.md)
+1. [How to load AWS Cloudformation queue](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/load-aws-cloudformation-queue.md)
+1. [How to migrate Senzing in AWS Cloudformation](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/migrate-senzing-in-cloudformation.md)
+1. [How to update Senzing license](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/update-senzing-license.md)
 
 ### Review AWS Cloudformation
 
@@ -319,7 +356,10 @@ Technical information on AWS Cloudformation parameters can be seen at
 ### CertificateArn
 
 1. **Synopsis:**
-   The Amazon Resource Name (ARN) of the certificate used to enable HTTPS.
+   Amazon Resource Name (ARN) of certificate used for SSL support.
+   More information at
+   [AWS LoadBalancer Console](https://console.aws.amazon.com/ec2/v2/home#LoadBalancers).
+   Select a load balancer, view the "Listeners" tab, then click "View/edit certificates".
 
 ### DatabaseHostCore
 
@@ -358,28 +398,30 @@ Technical information on AWS Cloudformation parameters can be seen at
 ### DatabasePortCore
 
 1. **Synopsis:**
-   The port used to access each of the databases.
+   The port used to access the [DatabaseHostCore](#databasehostcore) database.
 1. **Details:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabasePortLibfeat
 
 1. **Synopsis:**
-   The port used to access each of the databases.
+   The port used to access the [DatabaseHostLibfeat](#databasehostlibfeat) database.
 1. **Details:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabasePortRes
 
 1. **Synopsis:**
-   The port used to access each of the databases.
+      The port used to access the [DatabaseHostRes](#databasehostres) database.
 1. **Details:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabaseUsername
 
 1. **Synopsis:**
-   The administrative user name for authenticating with the database.
+   Username to access database in each of the three databases.
+1. **Details:**
+   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### Ec2Vpc
 
@@ -431,18 +473,20 @@ Technical information on AWS Cloudformation parameters can be seen at
 ### SenzingVersion
 
 1. **Synopsis:**
-   The [Senzing version](https://senzing.com/releases/)
-   installed during the deployment.
+   The version of Senzing installed onto the AWS Elastic File System.
+   More information at [Senzing API Version History](https://senzing.com/releases/#api-releases).
 
 ### SshPassword
 
 1. **Synopsis:**
-   A randomly generated password to be used with the sshd tasks.
+   Password to be used when logging into the
+   [SSHD container](#runsshd).
 
 ### SshUsername
 
 1. **Synopsis:**
-   The username to be used with the sshd tasks.
+   User ID to be used when logging into the
+   [SSHD container](#runsshd).
 1. **Details:**
    Usually "root".
 
@@ -492,12 +536,14 @@ Technical information on AWS Cloudformation parameters can be seen at
    [Senzing API Server](https://github.com/Senzing/senzing-api-server)
    directly.
    The `/heartbeat` URI path simply demonstrates that the API server is responding.
+   For more URIs, see
+   [SwaggerUrl output value](#urlswagger).
 
 ### UrlJupyter
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Jupyter Notebooks](https://github.com/Senzing/docker-jupyter).
+   [Senzing Jupyter notebooks](https://github.com/Senzing/docker-jupyter).
 
 ### UrlSwagger
 
