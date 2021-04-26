@@ -85,7 +85,7 @@ Parameters:
     AllowedPattern: '.+|^I AGREE$'
     ConstraintDescription: AcknowledgeSecurityResponsibility parameter must be 'I AGREE'
     Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#acknowledgesecurityresponsibility'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#securityresponsibility'
     Type: String
 
 
@@ -2929,7 +2929,6 @@ Resources:
       ListenerArn: !Ref ListenerPort443
       Priority: 3
     Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
-
 
 # -- UserPool -----------------------------------------------------------------
 

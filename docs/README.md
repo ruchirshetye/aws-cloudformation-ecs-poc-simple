@@ -223,32 +223,6 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_accept_eula).
 1. **Default:** None
 
-### AcknowledgeSecurityResponsibility
-
-1. **Synopsis:**
-   The Senzing proof-of-concept AWS Cloudformation uses
-   [AWS Cognito](https://aws.amazon.com/cognito/) for authentication,
-   and HTTPS (using a self-signed certificate) for encrypted network traffic
-   to expose services through a single, internet-facing AWS Elastic Load Balancer.
-   With exception of the
-   [senzing/sshd](https://github.com/Senzing/docker-sshd) container,
-   no tasks in the AWS Elastic Container Service (ECS) have public IP addresses.
-
-   To enable additional security measures for the deployment in your specific environment,
-   you'll need to consult with your AWS administrator.
-   Examples of additional security measures:
-    - [AWS Route53](https://aws.amazon.com/route53/) with genuine X.509 certificate
-    - [AWS Web Application Firewall (WAF)](https://aws.amazon.com/waf/)
-    - [AWS Shield](https://aws.amazon.com/shield/)
-    - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/)
-    - [Amazon API Gateway](https://aws.amazon.com/api-gateway/)
-    - Restrictive value for [CidrInbound](#cidrinbound)
-1. **Required:** Yes
-1. **Type:** String
-1. **Allowed values:**
-    1. "I AGREE"
-1. **Default:** None
-
 ### CidrInbound
 
 1. **Synopsis:** A Classless Inter-Domain Routing (CIDR) value used to limit access to the system.
@@ -302,6 +276,32 @@ Technical information on AWS Cloudformation parameters can be seen at
     1. No
 1. **Default:** Yes
 
+### SecurityResponsibility
+
+1. **Synopsis:**
+   The Senzing proof-of-concept AWS Cloudformation uses
+   [AWS Cognito](https://aws.amazon.com/cognito/) for authentication,
+   and HTTPS (using a self-signed certificate) for encrypted network traffic
+   to expose services through a single, internet-facing AWS Elastic Load Balancer.
+   With exception of the
+   [senzing/sshd](https://github.com/Senzing/docker-sshd) container,
+   no tasks in the AWS Elastic Container Service (ECS) have public IP addresses.
+
+   To enable additional security measures for the deployment in your specific environment,
+   you'll need to consult with your AWS administrator.
+   Examples of additional security measures:
+    - [AWS Route53](https://aws.amazon.com/route53/) with genuine X.509 certificate
+    - [AWS Web Application Firewall (WAF)](https://aws.amazon.com/waf/)
+    - [AWS Shield](https://aws.amazon.com/shield/)
+    - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/)
+    - [Amazon API Gateway](https://aws.amazon.com/api-gateway/)
+    - Restrictive value for [CidrInbound](#cidrinbound)
+1. **Required:** Yes
+1. **Type:** String
+1. **Allowed values:**
+    1. "I AGREE"
+1. **Default:** None
+
 ### SenzingLicenseAsBase64
 
 1. **Synopsis:**
@@ -347,6 +347,14 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Default:** None
 
 ## Outputs
+
+### 0penFirst
+
+1. **Synopsis:**
+   An alias for [UrlWebApp](#urlwebapp).
+   Since it's one of the first things to look at, it is listed first.
+1. **Details:**
+   It is listed first because the name "cheats" and uses a zero instead of a capital "o".
 
 ### AccountID
 
@@ -438,22 +446,6 @@ Technical information on AWS Cloudformation parameters can be seen at
    More information at [AWS Load Balancers console](https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers:).
    Also used as the `host` value when using [UrlSwagger](#urlswagger).
 
-### OpenFirst
-
-1. **Synopsis:**
-   An alias for [UrlWebApp](#urlwebapp).
-   Since it's one of the first things to look at, it is listed first.
-1. **Details:**
-   It is listed first because the name "cheats" and uses a zero instead of a capital "o".
-
-### Queue
-
-1. **Synopsis:**
-   The queue from which records are ingested into Senzing Engine.
-   In otherwords, this is the queue where records are sent to be inserted into the Senzing Engine.
-1. **Details:**
-   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
-
 ### QueueDeadLetter
 
 1. **Synopsis:**
@@ -462,11 +454,38 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Details:**
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
 
-### QueueInfo
+### QueueInput
+
+1. **Synopsis:**
+   The queue from which records are ingested into Senzing Engine.
+   In otherwords, this is the queue where records are sent to be inserted into the Senzing Engine.
+1. **Details:**
+   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
+
+### QueueOutput
 
 1. **Synopsis:**
    The queue that is populated with responses from inserting records into the Senzing Engine.
-   This is commonly calls "WithInfo" information.
+   This is commonly called "WithInfo" information.
+1. **Details:**
+   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
+
+### QueueRedoerInput
+
+1. **Synopsis:**
+   The queue populated by the `redoer` with records the Senzing Engine identified as needing
+   reevaluation.
+   The queue will be consumed by the fleet of `redoers` that read from the queue and send
+   to the Senzing Engine for reprocessing.
+   The results will be sent to the [QueueRedoerOutput](#queueredoeroutput).
+1. **Details:**
+   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
+
+### QueueRedoerOutput
+
+1. **Synopsis:**
+   The queue that is populated with responses from reprocessing records.
+   This is commonly called "WithInfo" information from the `redoer`.
 1. **Details:**
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
 
@@ -479,14 +498,12 @@ Technical information on AWS Cloudformation parameters can be seen at
 ### SshPassword
 
 1. **Synopsis:**
-   Password to be used when logging into the
-   [SSHD container](#runsshd).
+   Password to be used when logging into the SSHD container.
 
 ### SshUsername
 
 1. **Synopsis:**
-   User ID to be used when logging into the
-   [SSHD container](#runsshd).
+   User ID to be used when logging into the SSHD container.
 1. **Details:**
    Usually "root".
 
