@@ -35,12 +35,12 @@ Metadata:
           default: Security
         Parameters:
           - CognitoAdminEmail
+          - CidrInbound
       -
         Label:
-          default: Options
+          default: 'Optional: Initial data load'
         Parameters:
           - RunStreamProducer
-          - CidrInbound
     ParameterLabels:
       AcceptEula:
         default: >-
@@ -52,7 +52,7 @@ Metadata:
       CognitoAdminEmail:
         default: 'Required: Email address for initial user.'
       RunStreamProducer:
-        default: 'Optional: Would you like to have sample data imported?'
+        default: 'Optional: Would you like to have an initial set of data imported?'
       SecurityResponsibility:
         default: >-
           Required: A default deployment of this template is for public demonstration only.
