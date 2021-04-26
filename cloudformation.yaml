@@ -23,7 +23,7 @@ Metadata:
         Label:
           default: Security responsibility
         Parameters:
-          - AcknowledgeSecurityResponsibility
+          - SecurityResponsibility
       -
         Label:
           default: Senzing installation
@@ -47,18 +47,18 @@ Metadata:
           Required: If you accept the Senzing End User License Agreement at
           https://senzing.com/end-user-license-agreement,
           enter 'I_ACCEPT_THE_SENZING_EULA'.
-      AcknowledgeSecurityResponsibility:
-        default: >-
-          Required: A default deployment of this template is for public demonstration only.
-          Before using authentic PII, ensure the security of your deployment.
-          The security of this deployment is your responsibility.
-          To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
       CidrInbound:
         default: 'Optional: Allowed inbound connections using CIDR notation.'
       CognitoAdminEmail:
         default: 'Required: Email address for initial user.'
       RunStreamProducer:
         default: 'Optional: Would you like to have sample data imported?'
+      SecurityResponsibility:
+        default: >-
+          Required: A default deployment of this template is for public demonstration only.
+          Before using authentic PII, ensure the security of your deployment.
+          The security of this deployment is your responsibility.
+          To acknowledge your understanding and acceptance of the foregoing, type “I AGREE”.
       SenzingLicenseAsBase64:
         default: >-
           Required if inserting more than 100K records.
@@ -81,14 +81,6 @@ Parameters:
     Type: String
 
 
-  AcknowledgeSecurityResponsibility:
-    AllowedPattern: '.+|^I AGREE$'
-    ConstraintDescription: AcknowledgeSecurityResponsibility parameter must be 'I AGREE'
-    Default: '_'
-    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#securityresponsibility'
-    Type: String
-
-
   CidrInbound:
     AllowedPattern: '(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?'
     ConstraintDescription: Inbound CIDR must be in the format n.n.n.n/n
@@ -108,6 +100,14 @@ Parameters:
       - 'Yes'
     Default: 'Yes'
     Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#runstreamproducer'
+    Type: String
+
+
+  SecurityResponsibility:
+    AllowedPattern: '.+|^I AGREE$'
+    ConstraintDescription: SecurityResponsibility parameter must be 'I AGREE'
+    Default: '_'
+    Description: 'Help: http://hub.senzing.com/aws-cloudformation-ecs-poc-simple/#securityresponsibility'
     Type: String
 
 
@@ -138,10 +138,10 @@ Rules:
         AssertDescription: 'EULA acceptance incorrect.  Enter "I_ACCEPT_THE_SENZING_EULA"'
 
 
-  ConfirmAcknowledgeSecurityResponsibility:
+  ConfirmSecurityResponsibility:
     Assertions:
       - Assert: !Equals
-          - !Ref AcknowledgeSecurityResponsibility
+          - !Ref SecurityResponsibility
           - 'I AGREE'
         AssertDescription: 'Entering "I AGREE" is required to proceed.'
 
