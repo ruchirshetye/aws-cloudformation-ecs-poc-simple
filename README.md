@@ -9,12 +9,12 @@ Detailed instructions at
 
 ## How to deploy without much thinking
 
-1. :thinking: **Warning:** This Cloudformation deployment will accrue AWS costs.
+1. :warning: **Warning:** This Cloudformation deployment will accrue AWS costs.
    With appropriate permissions, the
    [AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/)
    can help evaluate costs.
 1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-poc-simple/cloudformation.yaml)
-1. In lower-right, click on "Next" button.
+1. At lower-right, click on "Next" button.
 1. In **Specify stack details**
     1. In **Parameters**
         1. In **Security responsibility**
@@ -25,13 +25,13 @@ Detailed instructions at
         1. In **Security**
             1. Enter your email address.  Example: `me@example.com`
     1. Other parameters are optional.
-    1. In lower-right, click "Next" button.
+    1. At lower-right, click "Next" button.
 1. In **Configure stack options**
-    1. In lower-right, click "Next" button.
+    1. At lower-right, click "Next" button.
 1. In **Review senzing-poc**
     1. Near the bottom, in **Capabilities**
         1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
-    1. In lower-right, click "Create stack" button.
+    1. At lower-right, click "Create stack" button.
 
 ## A Hack
 
