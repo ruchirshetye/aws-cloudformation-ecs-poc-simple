@@ -94,16 +94,13 @@ describing where we can improve.   Now on with the show...
 
 ### Launch AWS Cloudformation
 
-1. :thinking: **Warning:** This Cloudformation deployment will accrue AWS costs.
+1. :warning: **Warning:** This Cloudformation deployment will accrue AWS costs.
    With appropriate permissions, the
    [AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/)
    can help evaluate costs.
 1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-poc-simple/cloudformation.yaml)
-1. In lower-right, click on "Next" button.
+1. At lower-right, click on "Next" button.
 1. In **Specify stack details**
-    1. In **Stack name**
-        1. Enter an identifier of your choosing.
-           Example: "senzing-poc"
     1. In **Parameters**
         1. In **Security responsibility**
             1. Understand the nature of the security in the deployment.
@@ -114,18 +111,18 @@ describing where we can improve.   Now on with the show...
             1. Enter your email address.  Example: `me@example.com`
     1. Other parameters are optional.
        The default values are fine.
-    1. In lower-right, click "Next" button.
+    1. At lower-right, click "Next" button.
 1. In **Configure stack options**
-    1. In lower-right, click "Next" button.
-1. In **Review {stack-name}**
+    1. At lower-right, click "Next" button.
+1. In **Review senzing-poc**
     1. Near the bottom, in **Capabilities**
         1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
-    1. In lower-right, click "Create stack" button.
+    1. At lower-right, click "Create stack" button.
 
 ## A Hack
 
-Unfortunately, the AWS Cloudformation template does not support a particular parameter
-for the AWS Aurora Postgres Serverless database that is needed in this stack.
+Unfortunately, the AWS Cloudformation template does not support a particular parameter for the AWS Aurora Postgres Serverless database
+that is needed in this stack.
 To work around this limitation, see
 [How to set AWS RDS force-scaling-capacity](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/set-aws-rds-force-scaling-capacity.md).
 If possible, add a "thumbs" up to
@@ -136,21 +133,24 @@ to draw attention to this AWS Cloudformation defect.
 
 1. Visit [AWS CloudFormation console](https://console.aws.amazon.com/cloudformation/home).
     1. Make sure correct AWS region is selected.
-1. Wait until "{stack-name}" status is `CREATE_COMPLETE`.
+1. Wait until "senzing-poc" status is `CREATE_COMPLETE`.
     1. Senzing formation takes about 20 minutes to fully deploy.
     1. May have to hit the refresh button a few times to get updated information.
-1. Click on "{stack-name}" stack.
+1. Click on "senzing-poc" stack.
 1. Click on "Outputs" tab.
-1. Click on "0penFirst" value.
-    1. You will be prompted for username and password,
-       Use the `UserName` and `UserInitPassword` values found in the "Outputs" tab.
+1. Open the "0penFirst" value in a new web browser tab or window.
+    1. Because this uses a self-signed certificate, a warning will come up in your browser.  Simply continue.
+    1. In the "Sign in with your email and password" dialog box, enter the *UserName* and *UserInitPassword*
+       values seen in the "Output" tab of the "senzing-poc" stack.  This is a one-time password.
+    1. In **Change Password**, enter a new password.
 
 ## Additional topics
 
-1. [How to set AWS RDS force-scaling-capacity](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/set-aws-rds-force-scaling-capacity.md)
 1. [How to load AWS Cloudformation queue](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/load-aws-cloudformation-queue.md)
+1. [How to set AWS RDS force-scaling-capacity](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/set-aws-rds-force-scaling-capacity.md)
 1. [How to migrate Senzing in AWS Cloudformation](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/migrate-senzing-in-cloudformation.md)
 1. [How to update Senzing license](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/update-senzing-license.md)
+1. [How to migrate an AWS RDS database](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/migrate-aws-rds-database.md)
 
 ### Review AWS Cloudformation
 
