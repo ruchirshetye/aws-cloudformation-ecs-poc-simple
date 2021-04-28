@@ -3,7 +3,7 @@
 ## Where am I
 
 To see where this documentation fits into the grand scheme of things, visit
-[You are here](https://hub.senzing.com/subway-map/index-simple.html?#aws-cloudformation-ecs-poc-simple)
+[You are here](https://hub.senzing.com/subway-map/index-simple.html?#aws-cloudformation-ecs-poc-simple).
 
 ## Synopsis
 
