@@ -54,7 +54,7 @@ to draw attention to this AWS Cloudformation defect.
 1. Click on "Outputs" tab.
 1. Open the "0penFirst" value in a new web browser tab or window.
     1. Because this uses a self-signed certificate, a warning will come up in your browser.  Simply continue.
-    1. In the initial "Sign in with your email and password" dialog box, enter the *UserName* and *UserInitPassword*
+    1. In the "Sign in with your email and password" dialog box, enter the *UserName* and *UserInitPassword*
        values seen in the "Output" tab of the "senzing-poc" stack.  This is a one-time password.
     1. In **Change Password**, enter a new password.
 
