@@ -57,6 +57,9 @@ GitHub repository for
     1. [Legend](#legend)
 1. [Expectations](#expectations)
 1. [Demonstrate using AWS Console](#demonstrate-using-aws-console)
+1. [A Hack](#a-hack)
+1. [Using deployment](#using-deployment)
+1. [Additional topics](#additional-topics)
 1. [Parameters](#parameters)
 1. [Outputs](#outputs)
 
@@ -91,29 +94,63 @@ describing where we can improve.   Now on with the show...
 
 ### Launch AWS Cloudformation
 
+1. :warning: **Warning:** This Cloudformation deployment will accrue AWS costs.
+   With appropriate permissions, the
+   [AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/)
+   can help evaluate costs.
 1. Visit [AWS Cloudformation with Senzing template](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=senzing-poc&templateURL=https://s3.amazonaws.com/public-read-access/aws-cloudformation-ecs-poc-simple/cloudformation.yaml)
-1. In lower-right, click on "Next" button.
+1. At lower-right, click on "Next" button.
 1. In **Specify stack details**
-    1. In **Stack name**
-        1. Enter an identifier of your choosing.
-           Example: "senzing-poc"
     1. In **Parameters**
         1. In **Security responsibility**
             1. Understand the nature of the security in the deployment.
             1. Once understood, enter "I AGREE".
         1. In **Senzing installation**
-            1. Accept the End User Licence Agreement
+            1. Accept the End User License Agreement
         1. In **Security**
             1. Enter your email address.  Example: `me@example.com`
     1. Other parameters are optional.
-    1. In lower-right, click "Next" button.
+       The default values are fine.
+    1. At lower-right, click "Next" button.
 1. In **Configure stack options**
-    1. In lower-right, click "Next" button.
-1. In **Review {stack-name}**
+    1. At lower-right, click "Next" button.
+1. In **Review senzing-poc**
     1. Near the bottom, in **Capabilities**
         1. Check ":ballot_box_with_check: I acknowledge that AWS CloudFormation might create IAM resources."
-    1. In lower-right, click "Create stack" button.
-1. Senzing formation takes about 15 minutes to fully deploy.
+    1. At lower-right, click "Create stack" button.
+
+## A Hack
+
+Unfortunately, the AWS Cloudformation template does not support a particular parameter for the AWS Aurora Postgres Serverless database
+that is needed in this stack.
+To work around this limitation, see
+[How to set AWS RDS force-scaling-capacity](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/set-aws-rds-force-scaling-capacity.md).
+If possible, add a "thumbs" up to
+[AWS Cloudformation issue #298](https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/298)
+to draw attention to this AWS Cloudformation defect.
+
+## Using deployment
+
+1. Visit [AWS CloudFormation console](https://console.aws.amazon.com/cloudformation/home).
+    1. Make sure correct AWS region is selected.
+1. Wait until "senzing-poc" status is `CREATE_COMPLETE`.
+    1. Senzing formation takes about 20 minutes to fully deploy.
+    1. May have to hit the refresh button a few times to get updated information.
+1. Click on "senzing-poc" stack.
+1. Click on "Outputs" tab.
+1. Open the "0penFirst" value in a new web browser tab or window.
+    1. Because this uses a self-signed certificate, a warning will come up in your browser.  Simply continue.
+    1. In the "Sign in with your email and password" dialog box, enter the *UserName* and *UserInitPassword*
+       values seen in the "Output" tab of the "senzing-poc" stack.  This is a one-time password.
+    1. In **Change Password**, enter a new password.
+
+## Additional topics
+
+1. [How to load AWS Cloudformation queue](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/load-aws-cloudformation-queue.md)
+1. [How to set AWS RDS force-scaling-capacity](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/set-aws-rds-force-scaling-capacity.md)
+1. [How to migrate Senzing in AWS Cloudformation](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/migrate-senzing-in-cloudformation.md)
+1. [How to update Senzing license](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/update-senzing-license.md)
+1. [How to migrate an AWS RDS database](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/migrate-aws-rds-database.md)
 
 ### Review AWS Cloudformation
 
@@ -186,32 +223,6 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Allowed values:** See [SENZING_ACCEPT_EULA](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_accept_eula).
 1. **Default:** None
 
-### AcknowledgeSecurityResponsibility
-
-1. **Synopsis:**
-   The Senzing proof-of-concept AWS Cloudformation uses
-   [AWS Cognito](https://aws.amazon.com/cognito/) for authentication,
-   and HTTPS (using a self-signed certificate) for encrypted network traffic
-   to expose services through a single, internet-facing AWS Elastic Load Balancer.
-   With exception of the
-   [senzing/sshd](https://github.com/Senzing/docker-sshd) container,
-   no tasks in the AWS Elastic Container Service (ECS) have public IP addresses.
-
-   To enable additional security measures for the deployment in your specific environment,
-   you'll need to consult with your AWS administrator.
-   Examples of additional security measures:
-    - [AWS Route53](https://aws.amazon.com/route53/) with genuine X.509 certificate
-    - [AWS Web Application Firewall (WAF)](https://aws.amazon.com/waf/)
-    - [AWS Shield](https://aws.amazon.com/shield/)
-    - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/)
-    - [Amazon API Gateway](https://aws.amazon.com/api-gateway/)
-    - Restrictive value for [CidrInbound](#cidrinbound)
-1. **Required:** Yes
-1. **Type:** String
-1. **Allowed values:**
-    1. "I AGREE"
-1. **Default:** None
-
 ### CidrInbound
 
 1. **Synopsis:** A Classless Inter-Domain Routing (CIDR) value used to limit access to the system.
@@ -265,6 +276,32 @@ Technical information on AWS Cloudformation parameters can be seen at
     1. No
 1. **Default:** Yes
 
+### SecurityResponsibility
+
+1. **Synopsis:**
+   The Senzing proof-of-concept AWS Cloudformation uses
+   [AWS Cognito](https://aws.amazon.com/cognito/) for authentication,
+   and HTTPS (using a self-signed certificate) for encrypted network traffic
+   to expose services through a single, internet-facing AWS Elastic Load Balancer.
+   With exception of the
+   [senzing/sshd](https://github.com/Senzing/docker-sshd) container,
+   no tasks in the AWS Elastic Container Service (ECS) have public IP addresses.
+
+   To enable additional security measures for the deployment in your specific environment,
+   you'll need to consult with your AWS administrator.
+   Examples of additional security measures:
+    - [AWS Route53](https://aws.amazon.com/route53/) with genuine X.509 certificate
+    - [AWS Web Application Firewall (WAF)](https://aws.amazon.com/waf/)
+    - [AWS Shield](https://aws.amazon.com/shield/)
+    - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/)
+    - [Amazon API Gateway](https://aws.amazon.com/api-gateway/)
+    - Restrictive value for [CidrInbound](#cidrinbound)
+1. **Required:** Yes
+1. **Type:** String
+1. **Allowed values:**
+    1. "I AGREE"
+1. **Default:** None
+
 ### SenzingLicenseAsBase64
 
 1. **Synopsis:**
@@ -311,6 +348,14 @@ Technical information on AWS Cloudformation parameters can be seen at
 
 ## Outputs
 
+### 0penFirst
+
+1. **Synopsis:**
+   An alias for [UrlWebApp](#urlwebapp).
+   Since it's one of the first things to look at, it is listed first.
+1. **Details:**
+   It is listed first because the name "cheats" and uses a zero instead of a capital "o".
+
 ### AccountID
 
 1. **Synopsis:**
@@ -319,7 +364,10 @@ Technical information on AWS Cloudformation parameters can be seen at
 ### CertificateArn
 
 1. **Synopsis:**
-   The Amazon Resource Name (ARN) of the certificate used to enable HTTPS.
+   Amazon Resource Name (ARN) of certificate used for SSL support.
+   More information at
+   [AWS LoadBalancer Console](https://console.aws.amazon.com/ec2/v2/home#LoadBalancers).
+   Select a load balancer, view the "Listeners" tab, then click "View/edit certificates".
 
 ### DatabaseHostCore
 
@@ -358,28 +406,30 @@ Technical information on AWS Cloudformation parameters can be seen at
 ### DatabasePortCore
 
 1. **Synopsis:**
-   The port used to access each of the databases.
+   The port used to access the [DatabaseHostCore](#databasehostcore) database.
 1. **Details:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabasePortLibfeat
 
 1. **Synopsis:**
-   The port used to access each of the databases.
+   The port used to access the [DatabaseHostLibfeat](#databasehostlibfeat) database.
 1. **Details:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabasePortRes
 
 1. **Synopsis:**
-   The port used to access each of the databases.
+      The port used to access the [DatabaseHostRes](#databasehostres) database.
 1. **Details:**
    More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### DatabaseUsername
 
 1. **Synopsis:**
-   The administrative user name for authenticating with the database.
+   Username to access database in each of the three databases.
+1. **Details:**
+   More information at [AWS RDS Console](https://console.aws.amazon.com/rds/home).
 
 ### Ec2Vpc
 
@@ -396,22 +446,6 @@ Technical information on AWS Cloudformation parameters can be seen at
    More information at [AWS Load Balancers console](https://console.aws.amazon.com/ec2/v2/home?#LoadBalancers:).
    Also used as the `host` value when using [UrlSwagger](#urlswagger).
 
-### OpenFirst
-
-1. **Synopsis:**
-   An alias for [UrlWebApp](#urlwebapp).
-   Since it's one of the first things to look at, it is listed first.
-1. **Details:**
-   It is listed first because the name "cheats" and uses a zero instead of a capital "o".
-
-### Queue
-
-1. **Synopsis:**
-   The queue from which records are ingested into Senzing Engine.
-   In otherwords, this is the queue where records are sent to be inserted into the Senzing Engine.
-1. **Details:**
-   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
-
 ### QueueDeadLetter
 
 1. **Synopsis:**
@@ -420,29 +454,56 @@ Technical information on AWS Cloudformation parameters can be seen at
 1. **Details:**
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
 
-### QueueInfo
+### QueueInput
+
+1. **Synopsis:**
+   The queue from which records are ingested into Senzing Engine.
+   In otherwords, this is the queue where records are sent to be inserted into the Senzing Engine.
+1. **Details:**
+   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
+
+### QueueOutput
 
 1. **Synopsis:**
    The queue that is populated with responses from inserting records into the Senzing Engine.
-   This is commonly calls "WithInfo" information.
+   This is commonly called "WithInfo" information.
+1. **Details:**
+   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
+
+### QueueRedoerInput
+
+1. **Synopsis:**
+   The queue populated by the `redoer` with records the Senzing Engine identified as needing
+   reevaluation.
+   The queue will be consumed by the fleet of `redoers` that read from the queue and send
+   to the Senzing Engine for reprocessing.
+   The results will be sent to the [QueueRedoerOutput](#queueredoeroutput).
+1. **Details:**
+   More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
+
+### QueueRedoerOutput
+
+1. **Synopsis:**
+   The queue that is populated with responses from reprocessing records.
+   This is commonly called "WithInfo" information from the `redoer`.
 1. **Details:**
    More information at [AWS SQS Console](https://console.aws.amazon.com/sqs/v2/home?#/queues).
 
 ### SenzingVersion
 
 1. **Synopsis:**
-   The [Senzing version](https://senzing.com/releases/)
-   installed during the deployment.
+   The version of Senzing installed onto the AWS Elastic File System.
+   More information at [Senzing API Version History](https://senzing.com/releases/#api-releases).
 
 ### SshPassword
 
 1. **Synopsis:**
-   A randomly generated password to be used with the sshd tasks.
+   Password to be used when logging into the SSHD container.
 
 ### SshUsername
 
 1. **Synopsis:**
-   The username to be used with the sshd tasks.
+   User ID to be used when logging into the SSHD container.
 1. **Details:**
    Usually "root".
 
@@ -492,12 +553,14 @@ Technical information on AWS Cloudformation parameters can be seen at
    [Senzing API Server](https://github.com/Senzing/senzing-api-server)
    directly.
    The `/heartbeat` URI path simply demonstrates that the API server is responding.
+   For more URIs, see
+   [SwaggerUrl output value](#urlswagger).
 
 ### UrlJupyter
 
 1. **Synopsis:**
    A URL showing how to reach the
-   [Jupyter Notebooks](https://github.com/Senzing/docker-jupyter).
+   [Senzing Jupyter notebooks](https://github.com/Senzing/docker-jupyter).
 
 ### UrlSwagger
 
