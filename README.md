@@ -1,5 +1,10 @@
 # aws-cloudformation-ecs-poc-simple
 
+## Where am I
+
+To see where this documentation fits into the grand scheme of things, visit
+[You are here](https://hub.senzing.com/subway-map/index-simple.html?#aws-cloudformation-ecs-poc-simple)
+
 ## Synopsis
 
 The `aws-cloudformation-ecs-poc-simple` demonstrates a Senzing deployment using an AWS Cloudformation template.
