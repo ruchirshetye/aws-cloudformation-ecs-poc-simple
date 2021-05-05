@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2021-05-05
+
+### Changed in 0.7.3
+
+- Changed Senzing API Server Memory to 16384 and CPU to 2048
+
 ## [0.7.2] - 2021-04-28
 
 ### Changed in 0.7.2
